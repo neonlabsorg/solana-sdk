@@ -73,9 +73,9 @@ pub const DEFAULT_SLOTS_PER_EPOCH: u64 = 2 * TICKS_PER_DAY / DEFAULT_TICKS_PER_S
 pub const NUM_CONSECUTIVE_LEADER_SLOTS: u64 = 4;
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(DEFAULT_MS_PER_SLOT, 400);
+static_assertions::const_assert_eq!(DEFAULT_MS_PER_SLOT, 25);
 /// The expected duration of a slot (400 milliseconds).
-pub const DEFAULT_MS_PER_SLOT: u64 = 1_000 * DEFAULT_TICKS_PER_SLOT / DEFAULT_TICKS_PER_SECOND;
+pub const DEFAULT_MS_PER_SLOT: u64 = 25;
 pub const DEFAULT_S_PER_SLOT: f64 = DEFAULT_TICKS_PER_SLOT as f64 / DEFAULT_TICKS_PER_SECOND as f64;
 
 /// The time window of recent block hash values over which the bank will track
