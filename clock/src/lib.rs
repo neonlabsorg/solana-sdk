@@ -42,7 +42,7 @@ pub const MS_PER_TICK: u64 = 1000 / DEFAULT_TICKS_PER_SECOND;
 
 // At 160 ticks/s, 64 ticks per slot implies that leader rotation and voting will happen
 // every 400 ms. A fast voting cadence ensures faster finality and convergence
-pub const DEFAULT_TICKS_PER_SLOT: u64 = 64;
+pub const DEFAULT_TICKS_PER_SLOT: u64 = 4;
 
 pub const DEFAULT_HASHES_PER_SECOND: u64 = 10_000_000;
 
@@ -62,7 +62,7 @@ static_assertions::const_assert_eq!(TICKS_PER_DAY, 13_824_000);
 pub const TICKS_PER_DAY: u64 = DEFAULT_TICKS_PER_SECOND * SECONDS_PER_DAY;
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(DEFAULT_SLOTS_PER_EPOCH, 432_000);
+static_assertions::const_assert_eq!(DEFAULT_SLOTS_PER_EPOCH, 6_912_000);
 
 /// The number of slots per epoch after initial network warmup.
 ///
@@ -89,13 +89,13 @@ pub const DEFAULT_S_PER_SLOT: f64 = DEFAULT_TICKS_PER_SLOT as f64 / DEFAULT_TICK
 pub const MAX_HASH_AGE_IN_SECONDS: usize = 120;
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(MAX_RECENT_BLOCKHASHES, 300);
+static_assertions::const_assert_eq!(MAX_RECENT_BLOCKHASHES, 4800);
 // Number of maximum recent blockhashes (one blockhash per non-skipped slot)
 pub const MAX_RECENT_BLOCKHASHES: usize =
     MAX_HASH_AGE_IN_SECONDS * DEFAULT_TICKS_PER_SECOND as usize / DEFAULT_TICKS_PER_SLOT as usize;
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(MAX_PROCESSING_AGE, 150);
+static_assertions::const_assert_eq!(MAX_PROCESSING_AGE, 2400);
 // The maximum age of a blockhash that will be accepted by the leader
 pub const MAX_PROCESSING_AGE: usize = MAX_RECENT_BLOCKHASHES / 2;
 
