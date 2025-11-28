@@ -18,7 +18,7 @@ use {
 
 /// Maximum number of bytes a program may add to an account during a
 /// single top-level instruction.
-pub const MAX_PERMITTED_DATA_INCREASE: usize = 1_024 * 10;
+pub const MAX_PERMITTED_DATA_INCREASE: usize = 1_024 * 10 * 10;
 
 /// Value to indicate that an account is not borrowed.
 ///
