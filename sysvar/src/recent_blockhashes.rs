@@ -35,7 +35,7 @@ use {
     since = "1.9.0",
     note = "Please do not use, will no longer be available in the future"
 )]
-pub const MAX_ENTRIES: usize = 150;
+pub const MAX_ENTRIES: usize = 4800;
 
 impl_sysvar_id!(RecentBlockhashes);
 
@@ -157,7 +157,9 @@ impl Sysvar for RecentBlockhashes {}
 impl SysvarSerialize for RecentBlockhashes {
     fn size_of() -> usize {
         // hard-coded so that we don't have to construct an empty
-        6008 // golden, update if MAX_ENTRIES changes
+        // VECTOR_SIZE + MAX_ENTRIES * SIZE_OF<Entry>
+        // 8 + 4800 * 40 = 192008
+        192008 // golden, update if MAX_ENTRIES changes
     }
 }
 
