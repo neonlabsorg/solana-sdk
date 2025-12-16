@@ -100,7 +100,7 @@ impl FeeStructure {
 impl Default for FeeStructure {
     fn default() -> Self {
         Self {
-            lamports_per_signature: 5000,
+            lamports_per_signature: 0,
             lamports_per_write_lock: 0,
             compute_fee_bins: vec![FeeBin {
                 limit: 1_400_000,
