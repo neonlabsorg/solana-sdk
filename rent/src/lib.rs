@@ -14,7 +14,7 @@ pub mod sysvar;
 use solana_sdk_macro::CloneZeroed;
 
 // inlined to avoid solana_clock dep
-const DEFAULT_SLOTS_PER_EPOCH: u64 = 432_000;
+const DEFAULT_SLOTS_PER_EPOCH: u64 = 6_912_000;
 #[cfg(test)]
 static_assertions::const_assert_eq!(
     DEFAULT_SLOTS_PER_EPOCH,
@@ -51,17 +51,18 @@ pub struct Rent {
 /// - $1 per SOL
 /// - $0.01 per megabyte day
 /// - $3.65 per megabyte year
-pub const DEFAULT_LAMPORTS_PER_BYTE_YEAR: u64 = 1_000_000_000 / 100 * 365 / (1024 * 1024);
+// pub const DEFAULT_LAMPORTS_PER_BYTE_YEAR: u64 = 1_000_000_000 / 100 * 365 / (1024 * 1024);
+pub const DEFAULT_LAMPORTS_PER_BYTE_YEAR: u64 = 0;
 
 /// Default amount of time (in years) the balance has to include rent for the
 /// account to be rent exempt.
-pub const DEFAULT_EXEMPTION_THRESHOLD: f64 = 2.0;
+pub const DEFAULT_EXEMPTION_THRESHOLD: f64 = 0.0;
 
 /// Default percentage of collected rent that is burned.
 ///
 /// Valid values are in the range [0, 100]. The remaining percentage is
 /// distributed to validators.
-pub const DEFAULT_BURN_PERCENT: u8 = 50;
+pub const DEFAULT_BURN_PERCENT: u8 = 0;
 
 /// Account storage overhead for calculation of base rent.
 ///
