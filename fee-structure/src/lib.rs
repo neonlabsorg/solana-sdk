@@ -42,15 +42,16 @@ pub struct FeeDetails {
 }
 
 impl FeeDetails {
-    pub fn new(transaction_fee: u64, prioritization_fee: u64) -> Self {
+    pub fn new(_transaction_fee: u64, _prioritization_fee: u64) -> Self {
         Self {
-            transaction_fee,
-            prioritization_fee,
+            transaction_fee: 0,
+            prioritization_fee: 0,
         }
     }
 
     pub fn total_fee(&self) -> u64 {
-        self.transaction_fee.saturating_add(self.prioritization_fee)
+        // self.transaction_fee.saturating_add(self.prioritization_fee)
+        0
     }
 
     pub fn accumulate(&mut self, fee_details: &FeeDetails) {
@@ -63,37 +64,42 @@ impl FeeDetails {
     }
 
     pub fn transaction_fee(&self) -> u64 {
-        self.transaction_fee
+        // self.transaction_fee
+        0
     }
 
     pub fn prioritization_fee(&self) -> u64 {
-        self.prioritization_fee
+        // self.prioritization_fee
+        0
     }
 }
 
-pub const ACCOUNT_DATA_COST_PAGE_SIZE: u64 = 32_u64.saturating_mul(1024);
+pub const ACCOUNT_DATA_COST_PAGE_SIZE: u64 = 0;
+// pub const ACCOUNT_DATA_COST_PAGE_SIZE: u64 = 32_u64.saturating_mul(1024);
 
 impl FeeStructure {
     pub fn get_max_fee(&self, num_signatures: u64, num_write_locks: u64) -> u64 {
-        num_signatures
-            .saturating_mul(self.lamports_per_signature)
-            .saturating_add(num_write_locks.saturating_mul(self.lamports_per_write_lock))
-            .saturating_add(
-                self.compute_fee_bins
-                    .last()
-                    .map(|bin| bin.fee)
-                    .unwrap_or_default(),
-            )
+        // num_signatures
+        //     .saturating_mul(self.lamports_per_signature)
+        //     .saturating_add(num_write_locks.saturating_mul(self.lamports_per_write_lock))
+        //     .saturating_add(
+        //         self.compute_fee_bins
+        //             .last()
+        //             .map(|bin| bin.fee)
+        //             .unwrap_or_default(),
+        //     )
+        0
     }
 
     pub fn calculate_memory_usage_cost(
         loaded_accounts_data_size_limit: u32,
         heap_cost: u64,
     ) -> u64 {
-        (loaded_accounts_data_size_limit as u64)
-            .saturating_add(ACCOUNT_DATA_COST_PAGE_SIZE.saturating_sub(1))
-            .saturating_div(ACCOUNT_DATA_COST_PAGE_SIZE)
-            .saturating_mul(heap_cost)
+        // (loaded_accounts_data_size_limit as u64)
+        //     .saturating_add(ACCOUNT_DATA_COST_PAGE_SIZE.saturating_sub(1))
+        //     .saturating_div(ACCOUNT_DATA_COST_PAGE_SIZE)
+        //     .saturating_mul(heap_cost)
+        0
     }
 }
 

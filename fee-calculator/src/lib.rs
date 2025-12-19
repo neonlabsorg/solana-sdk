@@ -83,11 +83,11 @@ impl Default for FeeRateGovernor {
 }
 
 impl FeeRateGovernor {
-    pub fn new(target_lamports_per_signature: u64, target_signatures_per_slot: u64) -> Self {
+    pub fn new(_target_lamports_per_signature: u64, _target_signatures_per_slot: u64) -> Self {
         let base_fee_rate_governor = Self {
-            target_lamports_per_signature,
-            lamports_per_signature: target_lamports_per_signature,
-            target_signatures_per_slot,
+            target_lamports_per_signature: 0,
+            lamports_per_signature: 0,
+            target_signatures_per_slot: 0,
             ..FeeRateGovernor::default()
         };
 
@@ -96,24 +96,18 @@ impl FeeRateGovernor {
 
     pub fn new_derived(
         base_fee_rate_governor: &FeeRateGovernor,
-        latest_signatures_per_slot: u64,
+        _latest_signatures_per_slot: u64,
     ) -> Self {
         let mut me = base_fee_rate_governor.clone();
 
         if me.target_signatures_per_slot > 0 {
             // lamports_per_signature can range from 50% to 1000% of
             // target_lamports_per_signature
-            me.min_lamports_per_signature = core::cmp::max(1, me.target_lamports_per_signature / 2);
-            me.max_lamports_per_signature = me.target_lamports_per_signature * 10;
+            me.min_lamports_per_signature = 0;
+            me.max_lamports_per_signature = 0;
 
             // What the cluster should charge at `latest_signatures_per_slot`
-            let desired_lamports_per_signature =
-                me.max_lamports_per_signature
-                    .min(me.min_lamports_per_signature.max(
-                        me.target_lamports_per_signature
-                            * core::cmp::min(latest_signatures_per_slot, u32::MAX as u64)
-                            / me.target_signatures_per_slot,
-                    ));
+            let desired_lamports_per_signature = 0;
 
             trace!(
                 "desired_lamports_per_signature: {}",
@@ -124,7 +118,7 @@ impl FeeRateGovernor {
                 - base_fee_rate_governor.lamports_per_signature as i64;
 
             if gap == 0 {
-                me.lamports_per_signature = desired_lamports_per_signature;
+                me.lamports_per_signature = 0;
             } else {
                 // Adjust fee by 5% of target_lamports_per_signature to produce a smooth
                 // increase/decrease in fees over time.
@@ -137,17 +131,12 @@ impl FeeRateGovernor {
                     gap_adjust
                 );
 
-                me.lamports_per_signature =
-                    me.max_lamports_per_signature
-                        .min(me.min_lamports_per_signature.max(
-                            (base_fee_rate_governor.lamports_per_signature as i64 + gap_adjust)
-                                as u64,
-                        ));
+                me.lamports_per_signature = 0;
             }
         } else {
-            me.lamports_per_signature = base_fee_rate_governor.target_lamports_per_signature;
-            me.min_lamports_per_signature = me.target_lamports_per_signature;
-            me.max_lamports_per_signature = me.target_lamports_per_signature;
+            me.lamports_per_signature = 0;
+            me.min_lamports_per_signature = 0;
+            me.max_lamports_per_signature = 0;
         }
         debug!(
             "new_derived(): lamports_per_signature: {}",
@@ -156,23 +145,23 @@ impl FeeRateGovernor {
         me
     }
 
-    pub fn clone_with_lamports_per_signature(&self, lamports_per_signature: u64) -> Self {
+    pub fn clone_with_lamports_per_signature(&self, _lamports_per_signature: u64) -> Self {
         Self {
-            lamports_per_signature,
+            lamports_per_signature: 0,
             ..*self
         }
     }
 
     /// calculate unburned fee from a fee total, returns (unburned, burned)
-    pub fn burn(&self, fees: u64) -> (u64, u64) {
+    pub fn burn(&self, _fees: u64) -> (u64, u64) {
         // let burned = fees * u64::from(self.burn_percent) / 100;
         // (fees - burned, burned)
-        (fees, 0)
+        (0, 0)
     }
 
     /// create a FeeCalculator based on current cluster signature throughput
     pub fn create_fee_calculator(&self) -> FeeCalculator {
-        FeeCalculator::new(self.lamports_per_signature)
+        FeeCalculator::new(0)
     }
 }
 
