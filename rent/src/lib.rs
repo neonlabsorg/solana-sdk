@@ -92,9 +92,10 @@ impl Rent {
 
     /// Minimum balance due for rent-exemption of a given account data size.
     pub fn minimum_balance(&self, data_len: usize) -> u64 {
-        let bytes = data_len as u64;
-        (((ACCOUNT_STORAGE_OVERHEAD + bytes) * self.lamports_per_byte_year) as f64
-            * self.exemption_threshold) as u64
+        // let bytes = data_len as u64;
+        // (((ACCOUNT_STORAGE_OVERHEAD + bytes) * self.lamports_per_byte_year) as f64
+        //     * self.exemption_threshold) as u64
+        0
     }
 
     /// Whether a given balance and data length would be exempt.
@@ -113,8 +114,8 @@ impl Rent {
 
     /// Rent due for account that is known to be not exempt.
     pub fn due_amount(&self, data_len: usize, years_elapsed: f64) -> u64 {
-        let actual_data_len = data_len as u64 + ACCOUNT_STORAGE_OVERHEAD;
-        let lamports_per_year = self.lamports_per_byte_year * actual_data_len;
+        // let _actual_data_len = data_len as u64 + ACCOUNT_STORAGE_OVERHEAD;
+        let lamports_per_year = 0;
         (lamports_per_year as f64 * years_elapsed) as u64
     }
 
@@ -136,7 +137,7 @@ impl Rent {
         let exemption_threshold = DEFAULT_EXEMPTION_THRESHOLD * ratio;
         let lamports_per_byte_year = (DEFAULT_LAMPORTS_PER_BYTE_YEAR as f64 / ratio) as u64;
         Self {
-            lamports_per_byte_year,
+            lamports_per_byte_year: 0,
             exemption_threshold,
             ..Self::default()
         }
