@@ -78,7 +78,7 @@ pub const ACCOUNT_DATA_COST_PAGE_SIZE: u64 = 0;
 // pub const ACCOUNT_DATA_COST_PAGE_SIZE: u64 = 32_u64.saturating_mul(1024);
 
 impl FeeStructure {
-    pub fn get_max_fee(&self, num_signatures: u64, num_write_locks: u64) -> u64 {
+    pub fn get_max_fee(&self, _num_signatures: u64, _num_write_locks: u64) -> u64 {
         // num_signatures
         //     .saturating_mul(self.lamports_per_signature)
         //     .saturating_add(num_write_locks.saturating_mul(self.lamports_per_write_lock))
@@ -92,8 +92,8 @@ impl FeeStructure {
     }
 
     pub fn calculate_memory_usage_cost(
-        loaded_accounts_data_size_limit: u32,
-        heap_cost: u64,
+        _loaded_accounts_data_size_limit: u32,
+        _heap_cost: u64,
     ) -> u64 {
         // (loaded_accounts_data_size_limit as u64)
         //     .saturating_add(ACCOUNT_DATA_COST_PAGE_SIZE.saturating_sub(1))
