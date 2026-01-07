@@ -99,17 +99,13 @@ impl Rent {
     }
 
     /// Whether a given balance and data length would be exempt.
-    pub fn is_exempt(&self, balance: u64, data_len: usize) -> bool {
-        balance >= self.minimum_balance(data_len)
+    pub fn is_exempt(&self, _balance: u64, _data_len: usize) -> bool {
+        true
     }
 
     /// Rent due on account's data length with balance.
-    pub fn due(&self, balance: u64, data_len: usize, years_elapsed: f64) -> RentDue {
-        if self.is_exempt(balance, data_len) {
-            RentDue::Exempt
-        } else {
-            RentDue::Paying(self.due_amount(data_len, years_elapsed))
-        }
+    pub fn due(&self, _balance: u64, _data_len: usize, _years_elapsed: f64) -> RentDue {
+        RentDue::Exempt
     }
 
     /// Rent due for account that is known to be not exempt.
@@ -156,17 +152,18 @@ pub enum RentDue {
 impl RentDue {
     /// Return the lamports due for rent.
     pub fn lamports(&self) -> u64 {
-        match self {
-            RentDue::Exempt => 0,
-            RentDue::Paying(x) => *x,
-        }
+        0
+        // match self {
+        //     RentDue::Exempt => 0,
+        //     RentDue::Paying(x) => *x,
+        // }
     }
 
     /// Return 'true' if rent exempt.
     pub fn is_exempt(&self) -> bool {
         match self {
             RentDue::Exempt => true,
-            RentDue::Paying(_) => false,
+            RentDue::Paying(_) => true,
         }
     }
 }
