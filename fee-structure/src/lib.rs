@@ -109,7 +109,7 @@ impl Default for FeeStructure {
             lamports_per_signature: 0,
             lamports_per_write_lock: 0,
             compute_fee_bins: vec![FeeBin {
-                limit: 1_400_000,
+                limit: 14_000_000,
                 fee: 0,
             }],
         }
