@@ -36,6 +36,7 @@ define_syscall!(fn sol_account_data_read(account_index: u64, offset: u64, dst_ad
 define_syscall!(fn sol_account_data_write(account_index: u64, offset: u64, src_addr: *const u8, len: u64) -> u64);
 define_syscall!(fn sol_account_lamports_get(account_index: u64, out_lamports_addr: *mut u64) -> u64);
 define_syscall!(fn sol_account_lamports_set(account_index: u64, lamports: u64) -> u64);
+define_syscall!(fn sol_account_realloc(account_index: u64, new_len: u64, zero_init: u64) -> u64);
 define_syscall!(fn sol_panic_(filename: *const u8, filename_len: u64, line: u64, column: u64));
 
 // these are to be deprecated once they are superceded by sol_get_sysvar
