@@ -31,6 +31,11 @@ define_syscall!(fn sol_remaining_compute_units() -> u64);
 define_syscall!(fn sol_alt_bn128_compression(op: u64, input: *const u8, input_size: u64, result: *mut u8) -> u64);
 define_syscall!(fn sol_get_sysvar(sysvar_id_addr: *const u8, result: *mut u8, offset: u64, length: u64) -> u64);
 define_syscall!(fn sol_get_epoch_stake(vote_address: *const u8) -> u64);
+define_syscall!(fn sol_load_account(pubkey_addr: *const u8, is_writable: u64, out_index_addr: *mut u64) -> u64);
+define_syscall!(fn sol_account_data_read(account_index: u64, offset: u64, dst_addr: *mut u8, len: u64) -> u64);
+define_syscall!(fn sol_account_data_write(account_index: u64, offset: u64, src_addr: *const u8, len: u64) -> u64);
+define_syscall!(fn sol_account_lamports_get(account_index: u64, out_lamports_addr: *mut u64) -> u64);
+define_syscall!(fn sol_account_lamports_set(account_index: u64, lamports: u64) -> u64);
 define_syscall!(fn sol_panic_(filename: *const u8, filename_len: u64, line: u64, column: u64));
 
 // these are to be deprecated once they are superceded by sol_get_sysvar
