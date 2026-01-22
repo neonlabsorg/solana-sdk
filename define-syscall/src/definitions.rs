@@ -33,7 +33,9 @@ define_syscall!(fn sol_get_sysvar(sysvar_id_addr: *const u8, result: *mut u8, of
 define_syscall!(fn sol_get_epoch_stake(vote_address: *const u8) -> u64);
 define_syscall!(fn sol_load_account(pubkey_addr: *const u8, is_writable: u64, out_index_addr: *mut u64) -> u64);
 define_syscall!(fn sol_account_data_read(account_index: u64, offset: u64, dst_addr: *mut u8, len: u64) -> u64);
+define_syscall!(fn sol_account_data_slice(account_index: u64, offset: u64, len: u64, is_writable: u64, out_addr: *mut u64) -> u64);
 define_syscall!(fn sol_account_data_write(account_index: u64, offset: u64, src_addr: *const u8, len: u64) -> u64);
+define_syscall!(fn sol_account_data_len(account_index: u64, out_len_addr: *mut u64) -> u64);
 define_syscall!(fn sol_account_lamports_get(account_index: u64, out_lamports_addr: *mut u64) -> u64);
 define_syscall!(fn sol_account_lamports_set(account_index: u64, lamports: u64) -> u64);
 define_syscall!(fn sol_account_realloc(account_index: u64, new_len: u64, zero_init: u64) -> u64);

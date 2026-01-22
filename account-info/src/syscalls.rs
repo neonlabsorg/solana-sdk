@@ -4,8 +4,9 @@
 use solana_program_error::ProgramError;
 use solana_pubkey::Pubkey;
 use solana_define_syscall::definitions::{
-    sol_account_data_read, sol_account_data_write, sol_account_lamports_get,
-    sol_account_lamports_set, sol_account_realloc, sol_load_account,
+    sol_account_data_read, sol_account_data_slice, sol_account_data_write,
+    sol_account_data_len, sol_account_lamports_get, sol_account_lamports_set,
+    sol_account_realloc, sol_load_account,
 };
 
 /// Load an account into the transaction context and return its index.
@@ -63,6 +64,66 @@ pub fn account_data_write(account_index: u64, offset: usize, src: &[u8]) {
             src.as_ptr(),
             src.len() as u64,
         );
+    }
+}
+
+/// Get account data length.
+#[inline]
+pub fn account_data_len(account_index: u64) -> Result<u64, ProgramError> {
+    let mut len: u64 = 0;
+    let ret = unsafe { sol_account_data_len(account_index, &mut len as *mut u64) };
+    if ret == 0 {
+        Ok(len)
+    } else {
+        Err(ProgramError::from(ret))
+    }
+}
+
+/// Map a window of account data into program memory (read-only).
+#[inline]
+pub fn account_data_slice(
+    account_index: u64,
+    offset: usize,
+    len: usize,
+) -> Result<*const u8, ProgramError> {
+    let mut addr: u64 = 0;
+    let ret = unsafe {
+        sol_account_data_slice(
+            account_index,
+            offset as u64,
+            len as u64,
+            0,
+            &mut addr as *mut u64,
+        )
+    };
+    if ret == 0 {
+        Ok(addr as *const u8)
+    } else {
+        Err(ProgramError::from(ret))
+    }
+}
+
+/// Map a window of account data into program memory (writable).
+#[inline]
+pub fn account_data_slice_mut(
+    account_index: u64,
+    offset: usize,
+    len: usize,
+) -> Result<*mut u8, ProgramError> {
+    let mut addr: u64 = 0;
+    let ret = unsafe {
+        sol_account_data_slice(
+            account_index,
+            offset as u64,
+            len as u64,
+            1,
+            &mut addr as *mut u64,
+        )
+    };
+    if ret == 0 {
+        Ok(addr as *mut u8)
+    } else {
+        Err(ProgramError::from(ret))
     }
 }
 
