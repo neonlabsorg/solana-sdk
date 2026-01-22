@@ -1,6 +1,7 @@
 //! Dynamic account syscalls.
 #![cfg(target_os = "solana")]
 
+use solana_program_error::ProgramError;
 use solana_pubkey::Pubkey;
 use solana_define_syscall::definitions::{
     sol_account_data_read, sol_account_data_write, sol_account_lamports_get,
@@ -19,6 +20,24 @@ pub fn load_account(pubkey: &Pubkey, is_writable: bool) -> u64 {
         );
     }
     index
+}
+
+/// Load an account and return an error if the syscall fails.
+#[inline]
+pub fn load_account_checked(pubkey: &Pubkey, is_writable: bool) -> Result<u64, ProgramError> {
+    let mut index: u64 = 0;
+    let ret = unsafe {
+        sol_load_account(
+            pubkey.as_ref().as_ptr(),
+            is_writable as u64,
+            &mut index as *mut u64,
+        )
+    };
+    if ret == 0 {
+        Ok(index)
+    } else {
+        Err(ProgramError::from(ret))
+    }
 }
 
 /// Read account data into `dst` starting at `offset`.
