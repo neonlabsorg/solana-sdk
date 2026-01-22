@@ -80,6 +80,7 @@ pub fn account_data_len(account_index: u64) -> Result<u64, ProgramError> {
 }
 
 /// Map a window of account data into program memory (read-only).
+/// The mapped pointer becomes invalid after any new slice mapping or realloc.
 #[inline]
 pub fn account_data_slice(
     account_index: u64,
@@ -104,6 +105,7 @@ pub fn account_data_slice(
 }
 
 /// Map a window of account data into program memory (writable).
+/// The mapped pointer becomes invalid after any new slice mapping or realloc.
 #[inline]
 pub fn account_data_slice_mut(
     account_index: u64,
