@@ -6,7 +6,8 @@ use solana_pubkey::Pubkey;
 use solana_define_syscall::definitions::{
     sol_account_data_read, sol_account_data_slice, sol_account_data_write,
     sol_account_data_len, sol_account_data_slice_window, sol_account_lamports_get,
-    sol_account_lamports_set, sol_cpi_load_account, sol_cpi_load_accounts,
+    sol_account_lamports_set, sol_cpi_clear_accounts, sol_cpi_load_account,
+    sol_cpi_load_accounts, sol_cpi_unload_account,
     sol_account_realloc, sol_load_account,
 };
 
@@ -84,6 +85,28 @@ pub fn cpi_load_accounts_checked(
     };
     if ret == 0 {
         Ok(indices)
+    } else {
+        Err(ProgramError::from(ret))
+    }
+}
+
+/// Remove a dynamically loaded CPI account from the current instruction.
+#[inline]
+pub fn cpi_unload_account_checked(pubkey: &Pubkey) -> Result<(), ProgramError> {
+    let ret = unsafe { sol_cpi_unload_account(pubkey.as_ref().as_ptr()) };
+    if ret == 0 {
+        Ok(())
+    } else {
+        Err(ProgramError::from(ret))
+    }
+}
+
+/// Clear all dynamically loaded CPI accounts from the current instruction.
+#[inline]
+pub fn cpi_clear_accounts_checked() -> Result<(), ProgramError> {
+    let ret = unsafe { sol_cpi_clear_accounts() };
+    if ret == 0 {
+        Ok(())
     } else {
         Err(ProgramError::from(ret))
     }
