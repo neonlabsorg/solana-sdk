@@ -32,6 +32,8 @@ define_syscall!(fn sol_alt_bn128_compression(op: u64, input: *const u8, input_si
 define_syscall!(fn sol_get_sysvar(sysvar_id_addr: *const u8, result: *mut u8, offset: u64, length: u64) -> u64);
 define_syscall!(fn sol_get_epoch_stake(vote_address: *const u8) -> u64);
 define_syscall!(fn sol_load_account(pubkey_addr: *const u8, is_writable: u64, out_index_addr: *mut u64) -> u64);
+define_syscall!(fn sol_cpi_load_account(pubkey_addr: *const u8, is_writable: u64, is_signer: u64, out_index_addr: *mut u64) -> u64);
+define_syscall!(fn sol_cpi_load_accounts(pubkeys_addr: *const u8, count: u64, is_writable: u64, is_signer: u64, out_indices_addr: *mut u64) -> u64);
 define_syscall!(fn sol_account_data_read(account_index: u64, offset: u64, dst_addr: *mut u8, len: u64) -> u64);
 define_syscall!(fn sol_account_data_slice(account_index: u64, offset: u64, len: u64, is_writable: u64, out_addr: *mut u64) -> u64);
 define_syscall!(fn sol_account_data_slice_window(account_index: u64, offset: u64, len: u64, flags: u64, out_addr: *mut u64) -> u64);

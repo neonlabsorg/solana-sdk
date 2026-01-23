@@ -6,7 +6,7 @@ use solana_pubkey::Pubkey;
 use solana_define_syscall::definitions::{
     sol_account_data_read, sol_account_data_slice, sol_account_data_write,
     sol_account_data_len, sol_account_data_slice_window, sol_account_lamports_get,
-    sol_account_lamports_set,
+    sol_account_lamports_set, sol_cpi_load_account, sol_cpi_load_accounts,
     sol_account_realloc, sol_load_account,
 };
 
@@ -37,6 +37,53 @@ pub fn load_account_checked(pubkey: &Pubkey, is_writable: bool) -> Result<u64, P
     };
     if ret == 0 {
         Ok(index)
+    } else {
+        Err(ProgramError::from(ret))
+    }
+}
+
+/// Load an account for CPI usage and return its index.
+#[inline]
+pub fn cpi_load_account_checked(
+    pubkey: &Pubkey,
+    is_writable: bool,
+    is_signer: bool,
+) -> Result<u64, ProgramError> {
+    let mut index: u64 = 0;
+    let ret = unsafe {
+        sol_cpi_load_account(
+            pubkey.as_ref().as_ptr(),
+            is_writable as u64,
+            is_signer as u64,
+            &mut index as *mut u64,
+        )
+    };
+    if ret == 0 {
+        Ok(index)
+    } else {
+        Err(ProgramError::from(ret))
+    }
+}
+
+/// Load multiple accounts for CPI usage and return their indexes.
+#[inline]
+pub fn cpi_load_accounts_checked(
+    pubkeys: &[Pubkey],
+    is_writable: bool,
+    is_signer: bool,
+) -> Result<Vec<u64>, ProgramError> {
+    let mut indices = vec![0u64; pubkeys.len()];
+    let ret = unsafe {
+        sol_cpi_load_accounts(
+            pubkeys.as_ptr() as *const u8,
+            pubkeys.len() as u64,
+            is_writable as u64,
+            is_signer as u64,
+            indices.as_mut_ptr(),
+        )
+    };
+    if ret == 0 {
+        Ok(indices)
     } else {
         Err(ProgramError::from(ret))
     }

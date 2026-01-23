@@ -14,7 +14,7 @@ pub use solana_define_syscall::definitions::{
     sol_get_sysvar, sol_keccak256, sol_remaining_compute_units, sol_account_data_len,
     sol_account_data_read, sol_account_data_slice, sol_account_data_slice_window,
     sol_account_data_write, sol_account_lamports_get, sol_account_lamports_set,
-    sol_account_realloc, sol_load_account,
+    sol_account_realloc, sol_cpi_load_account, sol_cpi_load_accounts, sol_load_account,
 };
 #[cfg(target_feature = "static-syscalls")]
 pub use solana_define_syscall::sys_hash;
