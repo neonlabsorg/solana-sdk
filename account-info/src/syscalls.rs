@@ -5,7 +5,8 @@ use solana_program_error::ProgramError;
 use solana_pubkey::Pubkey;
 use solana_define_syscall::definitions::{
     sol_account_data_read, sol_account_data_slice, sol_account_data_write,
-    sol_account_data_len, sol_account_lamports_get, sol_account_lamports_set,
+    sol_account_data_len, sol_account_data_slice_window, sol_account_lamports_get,
+    sol_account_lamports_set,
     sol_account_realloc, sol_load_account,
 };
 
@@ -127,6 +128,58 @@ pub fn account_data_slice_mut(
     } else {
         Err(ProgramError::from(ret))
     }
+}
+
+#[inline]
+fn account_data_slice_window_impl(
+    account_index: u64,
+    offset: usize,
+    len: usize,
+    window_id: u64,
+    is_writable: bool,
+) -> Result<u64, ProgramError> {
+    let mut addr: u64 = 0;
+    let flags = (window_id << 1) | u64::from(is_writable);
+    let ret = unsafe {
+        sol_account_data_slice_window(
+            account_index,
+            offset as u64,
+            len as u64,
+            flags,
+            &mut addr as *mut u64,
+        )
+    };
+    if ret == 0 {
+        Ok(addr)
+    } else {
+        Err(ProgramError::from(ret))
+    }
+}
+
+/// Map a window of account data into a selected program memory region (read-only).
+/// The mapped pointer becomes invalid after any new slice mapping in the same window or realloc.
+#[inline]
+pub fn account_data_slice_window(
+    account_index: u64,
+    offset: usize,
+    len: usize,
+    window_id: u64,
+) -> Result<*const u8, ProgramError> {
+    account_data_slice_window_impl(account_index, offset, len, window_id, false)
+        .map(|addr| addr as *const u8)
+}
+
+/// Map a window of account data into a selected program memory region (writable).
+/// The mapped pointer becomes invalid after any new slice mapping in the same window or realloc.
+#[inline]
+pub fn account_data_slice_mut_window(
+    account_index: u64,
+    offset: usize,
+    len: usize,
+    window_id: u64,
+) -> Result<*mut u8, ProgramError> {
+    account_data_slice_window_impl(account_index, offset, len, window_id, true)
+        .map(|addr| addr as *mut u8)
 }
 
 /// Get lamports for a dynamic account.
