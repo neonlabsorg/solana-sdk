@@ -86,16 +86,16 @@ pub const DEFAULT_S_PER_SLOT: f64 = DEFAULT_TICKS_PER_SLOT as f64 / DEFAULT_TICK
 /// memory consumption, but requires a client to update its `recent_blockhash`
 /// more frequently. Raising the value lengthens the time a client must wait to
 /// be certain a missing transaction will not be processed by the network.
-pub const MAX_HASH_AGE_IN_SECONDS: usize = 120;
+pub const MAX_HASH_AGE_IN_SECONDS: usize = 3600;
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(MAX_RECENT_BLOCKHASHES, 4800);
+static_assertions::const_assert_eq!(MAX_RECENT_BLOCKHASHES, 144000);
 // Number of maximum recent blockhashes (one blockhash per non-skipped slot)
 pub const MAX_RECENT_BLOCKHASHES: usize =
     MAX_HASH_AGE_IN_SECONDS * DEFAULT_TICKS_PER_SECOND as usize / DEFAULT_TICKS_PER_SLOT as usize;
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(MAX_PROCESSING_AGE, 2400);
+static_assertions::const_assert_eq!(MAX_PROCESSING_AGE, 72000);
 // The maximum age of a blockhash that will be accepted by the leader
 pub const MAX_PROCESSING_AGE: usize = MAX_RECENT_BLOCKHASHES / 2;
 
