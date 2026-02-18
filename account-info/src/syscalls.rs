@@ -13,18 +13,18 @@ pub fn cpi_load_account_checked(
     pubkey: &Pubkey,
     is_writable: bool,
     is_signer: bool,
-    index: &mut u64,
-) -> Result<(), ProgramError> {
+) -> Result<u64, ProgramError> {
+    let mut index: u64 = 0;
     let ret = unsafe {
         sol_cpi_load_account(
             pubkey.as_ref().as_ptr(),
             is_writable as u64,
             is_signer as u64,
-            index as *mut u64,
+            &mut index as *mut u64,
         )
     };
     if ret == 0 {
-        Ok(())
+        Ok(index)
     } else {
         Err(ProgramError::from(ret))
     }
@@ -36,12 +36,8 @@ pub fn cpi_load_accounts_checked(
     pubkeys: &[Pubkey],
     is_writable: bool,
     is_signer: bool,
-    indices: &mut [u64],
-) -> Result<(), ProgramError> {
-    //let mut indices = vec![0u64; pubkeys.len()];
-    if indices.len() != pubkeys.len() {
-        return Err(ProgramError::InvalidArgument);
-    }
+) -> Result<Vec<u64>, ProgramError> {
+    let mut indices = vec![0u64; pubkeys.len()];
 
     let ret = unsafe {
         sol_cpi_load_accounts(
@@ -53,7 +49,7 @@ pub fn cpi_load_accounts_checked(
         )
     };
     if ret == 0 {
-        Ok(())
+        Ok(indices)
     } else {
         Err(ProgramError::from(ret))
     }
