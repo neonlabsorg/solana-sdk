@@ -298,8 +298,8 @@ macro_rules! custom_panic_default {
 
 /// The bump allocator used as the default rust heap when running programs.
 pub struct BumpAllocator {
-    start: usize,
-    len: usize,
+    pub start: usize,
+    pub len: usize,
 }
 
 impl BumpAllocator {
