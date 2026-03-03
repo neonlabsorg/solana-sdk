@@ -24,12 +24,9 @@ use {
 };
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(PACKET_DATA_SIZE, 1232);
-/// Maximum over-the-wire size of a Transaction
-///   1280 is IPv6 minimum MTU
-///   40 bytes is the size of the IPv6 header
-///   8 bytes is the size of the fragment header
-pub const PACKET_DATA_SIZE: usize = 1280 - 40 - 8;
+static_assertions::const_assert_eq!(PACKET_DATA_SIZE, 12 * 1024);
+/// Maximum over-the-wire size of a transaction payload in this fork.
+pub const PACKET_DATA_SIZE: usize = 12 * 1024;
 
 #[cfg(feature = "bincode")]
 pub trait Encode {
