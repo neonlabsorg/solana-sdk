@@ -37,7 +37,7 @@ pub const SUCCESS: u64 = 0;
 /// Start address of the memory region used for program heap.
 pub const HEAP_START_ADDRESS: u64 = 0x300000000;
 /// Length of the heap memory region used for program heap.
-pub const HEAP_LENGTH: usize = 32 * 1024;
+pub const HEAP_LENGTH: usize = 128 * 1024;
 
 /// Value used to indicate that a serialized account is not a duplicate
 pub const NON_DUP_MARKER: u8 = u8::MAX;
