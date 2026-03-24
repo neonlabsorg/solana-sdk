@@ -18,7 +18,7 @@ pub use {
     solana_account_info::AccountInfo as __AccountInfo,
     solana_account_info::MAX_PERMITTED_DATA_INCREASE,
     // Re-exporting for custom_panic
-    solana_define_syscall::definitions::{sol_log_ as __log, sol_panic_ as __panic},
+    solana_define_syscall::definitions::{sol_log_ as __log, sol_panic_ as __panic, sol_set_subaccount_slice as __set_subaccount_slice},
     solana_msg::msg as __msg,
     solana_program_error::ProgramResult,
     solana_pubkey::Pubkey as __Pubkey,
@@ -30,6 +30,15 @@ pub use {
 /// passed as part of the instruction instruction_data: Instruction data
 pub type ProcessInstruction =
     fn(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult;
+
+/// User implemented function to process a self-invoked instruction
+/// This is only used if the `entrypoint_with_self_invoke` macro is used to declare the entrypoint
+/// The function signature is the same as `ProcessInstruction` with an additional argument for subaccounts
+/// subaccounts: Accounts passed as part of the self-invoked instruction
+/// This function is called when the program is invoked through a self-invoke syscall, and the `subaccounts` 
+/// argument is populated with the accounts passed in the syscall
+pub type ProcessSelfInvoke = 
+    fn(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8], subaccounts: &[AccountInfo]) -> ProgramResult;
 
 /// Programs indicate success with a return value of 0
 pub const SUCCESS: u64 = 0;
@@ -128,8 +137,40 @@ macro_rules! entrypoint {
         /// # Safety
         #[no_mangle]
         pub unsafe extern "C" fn entrypoint(input: *mut u8) -> u64 {
-            let (program_id, accounts, instruction_data) = unsafe { $crate::deserialize(input) };
-            match $process_instruction(program_id, &accounts, instruction_data) {
+            let (program_id, accounts, instruction_data, subaccounts) = unsafe { $crate::deserialize(input) };
+            if !subaccounts.is_empty() {
+                Err(ProgramError::InvalidArgument).into()
+            } else {
+                match $process_instruction(program_id, &accounts, instruction_data) {
+                    Ok(()) => $crate::SUCCESS,
+                    Err(error) => error.into(),
+                }
+            }
+        }
+        $crate::custom_heap_default!();
+        $crate::custom_panic_default!();
+    };
+}
+
+/// Declare the program entrypoint and set up global handlers.
+///
+/// This is similar to the `entrypoint!` macro, except that it gets called for 
+/// both regular invocations and self-invocations with additional subaccounts.
+#[macro_export]
+macro_rules! entrypoint_with_self_invoke {
+    ($process_instruction:ident, $process_self_invoke:ident) => {
+        /// # Safety
+        #[no_mangle]
+        pub unsafe extern "C" fn entrypoint(input: *mut u8) -> u64 {
+            let (program_id, accounts, instruction_data, subaccounts) = unsafe { $crate::deserialize(input) };
+            let result = if subaccounts.is_empty() {
+                $process_instruction(program_id, &accounts, instruction_data)
+            } else {
+                let subaccounts_slice = subaccounts.as_slice();
+                $crate::__set_subaccount_slice(subaccounts_slice.as_ptr() as *const u8, subaccounts_slice.len() as u64);
+                $process_self_invoke(program_id, &accounts, instruction_data, &subaccounts)
+            };
+            match result {
                 Ok(()) => $crate::SUCCESS,
                 Err(error) => error.into(),
             }
@@ -447,7 +488,7 @@ unsafe fn deserialize_account_info<'a>(
 ///
 /// # Safety
 #[allow(clippy::arithmetic_side_effects)]
-pub unsafe fn deserialize<'a>(input: *mut u8) -> (&'a Pubkey, Vec<AccountInfo<'a>>, &'a [u8]) {
+pub unsafe fn deserialize<'a>(input: *mut u8) -> (&'a Pubkey, Vec<AccountInfo<'a>>, &'a [u8], Vec<AccountInfo<'a>>) {
     let mut offset: usize = 0;
 
     // Number of accounts present
@@ -482,8 +523,29 @@ pub unsafe fn deserialize<'a>(input: *mut u8) -> (&'a Pubkey, Vec<AccountInfo<'a
     // Program Id
 
     let program_id: &Pubkey = &*(input.add(offset) as *const Pubkey);
+    offset += size_of::<Pubkey>();
 
-    (program_id, accounts, instruction_data)
+    offset += (offset as *const u8).align_offset(BPF_ALIGN_OF_U128); // padding
+    // Number of subaccounts present
+    #[allow(clippy::cast_ptr_alignment)]
+    let num_subaccounts = *(input.add(offset) as *const u64) as usize;
+    offset += size_of::<u64>();
+    let mut subaccounts = Vec::with_capacity(num_subaccounts);
+
+    // Subaccounts
+    for _ in 0..num_subaccounts {
+        offset += size_of::<u8>();  // skip duplicate marker, subaccounts cannot be duplicated for now
+        let (account_info, new_offset) = deserialize_account_info(input, offset);
+        offset = new_offset;
+        subaccounts.push(account_info);
+    }
+
+    let subaccounts_slice = subaccounts.as_slice();
+    let subaccounts_ptr = subaccounts_slice.as_ptr() as u64;
+    let subaccounts_len = subaccounts_slice.len() as u64;
+    __msg!("Subaccounts slice: {:x}, length: {}", subaccounts_ptr, subaccounts_len);
+
+    (program_id, accounts, instruction_data, subaccounts)
 }
 
 /// Deserialize the input arguments

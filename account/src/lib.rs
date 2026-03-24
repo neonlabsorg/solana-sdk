@@ -146,6 +146,8 @@ pub struct AccountSharedData {
     rent_epoch: Epoch,
 }
 
+const SUBACCOUNT_RENT_EPOCH: Epoch = Epoch::MAX - 1;
+
 /// Compares two ReadableAccounts
 ///
 /// Returns true if accounts are essentially equivalent as in all fields are equivalent.
@@ -211,6 +213,9 @@ pub trait WritableAccount: ReadableAccount {
     fn copy_into_owner_from_slice(&mut self, source: &[u8]);
     fn set_executable(&mut self, executable: bool);
     fn set_rent_epoch(&mut self, epoch: Epoch);
+    fn set_subaccount_mark(&mut self) {
+        self.set_rent_epoch(SUBACCOUNT_RENT_EPOCH);
+    }
     fn create(
         lamports: u64,
         data: Vec<u8>,
@@ -234,6 +239,9 @@ pub trait ReadableAccount: Sized {
             self.executable(),
             self.rent_epoch(),
         )
+    }
+    fn is_subaccount(&self) -> bool {
+        self.rent_epoch() == SUBACCOUNT_RENT_EPOCH
     }
 }
 

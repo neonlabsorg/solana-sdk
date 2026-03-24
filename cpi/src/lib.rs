@@ -272,6 +272,36 @@ pub fn invoke_signed(
     invoke_signed_unchecked(instruction, account_infos, signers_seeds)
 }
 
+#[inline]
+pub fn self_invoke(
+    instruction: &Instruction,
+    account_infos: &[AccountInfo],
+    subaccounts_seeds: &[&[&[u8]]],
+) -> ProgramResult {
+    #[cfg(target_os = "solana")]
+    {
+        let instruction =
+            solana_stable_layout::stable_instruction::StableInstruction::from(instruction.clone());
+        
+        let result = unsafe {
+            crate::syscalls::sol_self_invoke(
+                &instruction as *const _ as *const u8,
+                account_infos as *const _ as *const u8,
+                account_infos.len() as u64,
+                subaccounts_seeds as *const _ as *const u8,
+                subaccounts_seeds.len() as u64,
+            )
+        };
+
+        match result {
+            _SUCCESS => Ok(()),
+            _ => Err(result.into()),
+        }
+    }
+    #[cfg(not(target_os = "solana"))]
+    Ok(())
+}
+
 /// Copied from `solana_program_entrypoint::SUCCESS`
 /// to avoid a `solana_program_entrypoint` dependency
 const _SUCCESS: u64 = 0;

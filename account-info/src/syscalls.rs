@@ -1,11 +1,63 @@
 //! Dynamic account syscalls.
 #![cfg(target_os = "solana")]
 
+use crate::AccountInfo;
 use solana_program_error::ProgramError;
 use solana_pubkey::Pubkey;
 use solana_define_syscall::definitions::{
-    sol_cpi_load_account, sol_cpi_load_accounts,
+    sol_cpi_load_account, sol_cpi_load_accounts, sol_create_subaccount, sol_set_subaccount_slice,
 };
+
+/// Create a new subaccount with the given seeds and space, owned by the caller.
+#[inline]
+pub fn create_subaccount(
+    payer: &Pubkey,
+    seeds: &[&[u8]],
+    space: u64,
+    lamports: u64,
+) -> Result<(), ProgramError> {
+    #[cfg(target_os = "solana")]
+    {
+        let result = unsafe {
+            sol_create_subaccount(
+                payer.as_ref().as_ptr(),
+                seeds as *const _ as *const u8,
+                seeds.len() as u64,
+                space as u64,
+                lamports as u64,
+            )
+        };
+
+        match result {
+            0 => Ok(()),
+            err => Err(ProgramError::from(err)),
+        }
+    }
+    #[cfg(not(target_os = "solana"))]
+    Ok(())
+}
+
+#[inline]
+pub fn set_subaccount_slice(
+    account_infos: &[AccountInfo],
+) -> Result<(), ProgramError> {
+    #[cfg(target_os = "solana")]
+    {
+        let result = unsafe {
+            sol_set_subaccount_slice(
+                account_infos.as_ptr() as *const u8,
+                account_infos.len() as u64,
+            )
+        };
+
+        match result {
+            0 => Ok(()),
+            err => Err(ProgramError::from(err)),
+        }
+    }
+    #[cfg(not(target_os = "solana"))]
+    Ok(())
+}
 
 /// Load an account for CPI usage and return its index.
 #[inline]

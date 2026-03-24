@@ -69,6 +69,21 @@ pub fn invoke_signed(
     invoke_signed_unchecked(instruction, account_infos, signers_seeds)
 }
 
+pub fn self_invoke(
+    instruction: &Instruction,
+    account_infos: &[AccountInfo],
+    subaccount_seeds: &[&[&[u8]]],
+) -> ProgramResult {
+    #[cfg(target_os = "solana")]
+    {
+        solana_cpi::self_invoke(instruction, account_infos, subaccount_seeds)
+    }
+
+    #[cfg(not(target_os = "solana"))]
+    Ok(())
+    // crate::program_stubs::sol_self_invoke(instruction, account_infos, subaccount_seeds)
+}
+
 /// Like [`solana_cpi::invoke_signed_unchecked`], but with support
 /// for overwriting the `sol_invoke_signed` syscall stub.
 ///
