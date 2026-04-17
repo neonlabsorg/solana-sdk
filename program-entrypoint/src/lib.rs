@@ -534,10 +534,18 @@ pub unsafe fn deserialize<'a>(input: *mut u8) -> (&'a Pubkey, Vec<AccountInfo<'a
 
     // Subaccounts
     for _ in 0..num_subaccounts {
-        offset += size_of::<u8>();  // skip duplicate marker, subaccounts cannot be duplicated for now
-        let (account_info, new_offset) = deserialize_account_info(input, offset);
-        offset = new_offset;
-        subaccounts.push(account_info);
+        let dup_info = *(input.add(offset) as *const u8);
+        offset += size_of::<u8>();  // duplicate marker
+        if dup_info == NON_DUP_MARKER {
+            let (account_info, new_offset) = deserialize_account_info(input, offset);
+            offset = new_offset;
+            subaccounts.push(account_info);
+        } else {
+            offset += 7; // padding
+
+            // Duplicate subaccount, clone the original
+            subaccounts.push(subaccounts[dup_info as usize].clone());
+        }
     }
 
     let subaccounts_slice = subaccounts.as_slice();
