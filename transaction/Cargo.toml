@@ -2,7 +2,7 @@
 name = "solana-transaction"
 description = "Solana transaction-types"
 documentation = "https://docs.rs/solana-transaction"
-version = "3.0.1"
+version = "3.0.2"
 authors = { workspace = true }
 repository = { workspace = true }
 homepage = { workspace = true }
@@ -27,6 +27,7 @@ frozen-abi = [
     "dep:solana-frozen-abi",
     "dep:solana-frozen-abi-macro",
     "dep:solana-logger",
+    "solana-transaction-error/frozen-abi",
 ]
 serde = [
     "dep:serde",
@@ -34,6 +35,7 @@ serde = [
     "dep:solana-short-vec",
     "solana-message/serde",
     "solana-signature/serde",
+    "solana-transaction-error/serde",
 ]
 verify = ["blake3", "solana-signature/verify"]
 
