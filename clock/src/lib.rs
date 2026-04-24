@@ -1,7 +1,7 @@
 //! Information about the network's clock, ticks, slots, etc.
 //!
 //! Time in Solana is marked primarily by _slots_, which occur approximately every
-//! 400 milliseconds, and are numbered sequentially. For every slot, a leader is
+//! 25 milliseconds, and are numbered sequentially. For every slot, a leader is
 //! chosen from the validator set, and that leader is expected to produce a new
 //! block, though sometimes leaders may fail to do so. Blocks can be identified
 //! by their slot number, and some slots do not contain a block.
@@ -40,9 +40,9 @@ static_assertions::const_assert_eq!(MS_PER_TICK, 6);
 /// The number of milliseconds per tick (6).
 pub const MS_PER_TICK: u64 = 1000 / DEFAULT_TICKS_PER_SECOND;
 
-// At 160 ticks/s, 64 ticks per slot implies that leader rotation and voting will happen
-// every 400 ms. A fast voting cadence ensures faster finality and convergence
-pub const DEFAULT_TICKS_PER_SLOT: u64 = 64;
+// At 160 ticks/s, 4 ticks per slot implies that leader rotation and voting will happen
+// every 25 ms. A fast voting cadence ensures faster finality and convergence
+pub const DEFAULT_TICKS_PER_SLOT: u64 = 4;
 
 pub const DEFAULT_HASHES_PER_SECOND: u64 = 10_000_000;
 
@@ -50,7 +50,7 @@ pub const DEFAULT_HASHES_PER_SECOND: u64 = 10_000_000;
 static_assertions::const_assert_eq!(DEFAULT_HASHES_PER_TICK, 62_500);
 pub const DEFAULT_HASHES_PER_TICK: u64 = DEFAULT_HASHES_PER_SECOND / DEFAULT_TICKS_PER_SECOND;
 
-// 1 Dev Epoch = 400 ms * 8192 ~= 55 minutes
+// 1 Dev Epoch = 25 ms * 8192 ~= 3.4 minutes
 pub const DEFAULT_DEV_SLOTS_PER_EPOCH: u64 = 8192;
 
 #[cfg(test)]
@@ -62,7 +62,7 @@ static_assertions::const_assert_eq!(TICKS_PER_DAY, 13_824_000);
 pub const TICKS_PER_DAY: u64 = DEFAULT_TICKS_PER_SECOND * SECONDS_PER_DAY;
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(DEFAULT_SLOTS_PER_EPOCH, 432_000);
+static_assertions::const_assert_eq!(DEFAULT_SLOTS_PER_EPOCH, 6_912_000);
 
 /// The number of slots per epoch after initial network warmup.
 ///
@@ -73,8 +73,8 @@ pub const DEFAULT_SLOTS_PER_EPOCH: u64 = 2 * TICKS_PER_DAY / DEFAULT_TICKS_PER_S
 pub const NUM_CONSECUTIVE_LEADER_SLOTS: u64 = 4;
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(DEFAULT_MS_PER_SLOT, 400);
-/// The expected duration of a slot (400 milliseconds).
+static_assertions::const_assert_eq!(DEFAULT_MS_PER_SLOT, 25);
+/// The expected duration of a slot (25 milliseconds).
 pub const DEFAULT_MS_PER_SLOT: u64 = 1_000 * DEFAULT_TICKS_PER_SLOT / DEFAULT_TICKS_PER_SECOND;
 pub const DEFAULT_S_PER_SLOT: f64 = DEFAULT_TICKS_PER_SLOT as f64 / DEFAULT_TICKS_PER_SECOND as f64;
 
@@ -89,13 +89,13 @@ pub const DEFAULT_S_PER_SLOT: f64 = DEFAULT_TICKS_PER_SLOT as f64 / DEFAULT_TICK
 pub const MAX_HASH_AGE_IN_SECONDS: usize = 120;
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(MAX_RECENT_BLOCKHASHES, 300);
+static_assertions::const_assert_eq!(MAX_RECENT_BLOCKHASHES, 4800);
 // Number of maximum recent blockhashes (one blockhash per non-skipped slot)
 pub const MAX_RECENT_BLOCKHASHES: usize =
     MAX_HASH_AGE_IN_SECONDS * DEFAULT_TICKS_PER_SECOND as usize / DEFAULT_TICKS_PER_SLOT as usize;
 
 #[cfg(test)]
-static_assertions::const_assert_eq!(MAX_PROCESSING_AGE, 150);
+static_assertions::const_assert_eq!(MAX_PROCESSING_AGE, 2400);
 // The maximum age of a blockhash that will be accepted by the leader
 pub const MAX_PROCESSING_AGE: usize = MAX_RECENT_BLOCKHASHES / 2;
 
