@@ -100,7 +100,6 @@ mod instruction_error_module {
         RentEpochModified,
 
         /// The instruction expected additional account keys
-        #[deprecated(since = "2.1.0", note = "Use InstructionError::MissingAccount instead")]
         NotEnoughAccountKeys,
 
         /// Program other than the account's owner changed the size of the account data
