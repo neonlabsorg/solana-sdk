@@ -52,17 +52,20 @@ pub struct Rent {
 /// - $1 per SOL
 /// - $0.01 per megabyte day
 /// - $3.65 per megabyte year
-pub const DEFAULT_LAMPORTS_PER_BYTE_YEAR: u64 = 1_000_000_000 / 100 * 365 / (1024 * 1024);
+// pub const DEFAULT_LAMPORTS_PER_BYTE_YEAR: u64 = 1_000_000_000 / 100 * 365 / (1024 * 1024);
+pub const DEFAULT_LAMPORTS_PER_BYTE_YEAR: u64 = 0;
 
 /// Default amount of time (in years) the balance has to include rent for the
 /// account to be rent exempt.
-pub const DEFAULT_EXEMPTION_THRESHOLD: f64 = 2.0;
+// pub const DEFAULT_EXEMPTION_THRESHOLD: f64 = 2.0;
+pub const DEFAULT_EXEMPTION_THRESHOLD: f64 = 0.0;
 
 /// Default percentage of collected rent that is burned.
 ///
 /// Valid values are in the range [0, 100]. The remaining percentage is
 /// distributed to validators.
-pub const DEFAULT_BURN_PERCENT: u8 = 50;
+// pub const DEFAULT_BURN_PERCENT: u8 = 50;
+pub const DEFAULT_BURN_PERCENT: u8 = 0;
 
 /// Account storage overhead for calculation of base rent.
 ///
@@ -91,10 +94,11 @@ impl Rent {
     }
 
     /// Minimum balance due for rent-exemption of a given account data size.
-    pub fn minimum_balance(&self, data_len: usize) -> u64 {
-        let bytes = data_len as u64;
-        (((ACCOUNT_STORAGE_OVERHEAD + bytes) * self.lamports_per_byte_year) as f64
-            * self.exemption_threshold) as u64
+    pub fn minimum_balance(&self, _data_len: usize) -> u64 {
+        // let bytes = data_len as u64;
+        // (((ACCOUNT_STORAGE_OVERHEAD + bytes) * self.lamports_per_byte_year) as f64
+        //     * self.exemption_threshold) as u64
+        0
     }
 
     /// Whether a given balance and data length would be exempt.
@@ -112,9 +116,10 @@ impl Rent {
     }
 
     /// Rent due for account that is known to be not exempt.
-    pub fn due_amount(&self, data_len: usize, years_elapsed: f64) -> u64 {
-        let actual_data_len = data_len as u64 + ACCOUNT_STORAGE_OVERHEAD;
-        let lamports_per_year = self.lamports_per_byte_year * actual_data_len;
+    pub fn due_amount(&self, _data_len: usize, years_elapsed: f64) -> u64 {
+        // let actual_data_len = data_len as u64 + ACCOUNT_STORAGE_OVERHEAD;
+        // let lamports_per_year = self.lamports_per_byte_year * actual_data_len;
+        let lamports_per_year = 0;
         (lamports_per_year as f64 * years_elapsed) as u64
     }
 
@@ -134,9 +139,11 @@ impl Rent {
     pub fn with_slots_per_epoch(slots_per_epoch: u64) -> Self {
         let ratio = slots_per_epoch as f64 / DEFAULT_SLOTS_PER_EPOCH as f64;
         let exemption_threshold = DEFAULT_EXEMPTION_THRESHOLD * ratio;
-        let lamports_per_byte_year = (DEFAULT_LAMPORTS_PER_BYTE_YEAR as f64 / ratio) as u64;
+        // let lamports_per_byte_year = (DEFAULT_LAMPORTS_PER_BYTE_YEAR as f64 / ratio) as u64;
+        let _lamports_per_byte_year = (DEFAULT_LAMPORTS_PER_BYTE_YEAR as f64 / ratio) as u64;
         Self {
-            lamports_per_byte_year,
+            // lamports_per_byte_year,
+            lamports_per_byte_year: 0,
             exemption_threshold,
             ..Self::default()
         }
