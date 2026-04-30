@@ -14,7 +14,7 @@ pub mod sysvar;
 use solana_sdk_macro::CloneZeroed;
 
 // inlined to avoid solana_clock dep
-const DEFAULT_SLOTS_PER_EPOCH: u64 = 6_912_000;
+const DEFAULT_SLOTS_PER_EPOCH: u64 = 1_728_000;
 #[cfg(test)]
 static_assertions::const_assert_eq!(
     DEFAULT_SLOTS_PER_EPOCH,
