@@ -61,7 +61,7 @@ pub struct FeeRateGovernor {
 }
 
 pub const DEFAULT_TARGET_LAMPORTS_PER_SIGNATURE: u64 = 0;
-const DEFAULT_MS_PER_SLOT: u64 = 25;
+const DEFAULT_MS_PER_SLOT: u64 = 100;
 #[cfg(test)]
 static_assertions::const_assert_eq!(DEFAULT_MS_PER_SLOT, solana_clock::DEFAULT_MS_PER_SLOT);
 pub const DEFAULT_TARGET_SIGNATURES_PER_SLOT: u64 = 0 * DEFAULT_MS_PER_SLOT;
