@@ -15,7 +15,7 @@ pub mod sysvar;
 use solana_sdk_macro::CloneZeroed;
 
 // inlined to avoid solana_clock dep
-const DEFAULT_SLOTS_PER_EPOCH: u64 = 432_000;
+const DEFAULT_SLOTS_PER_EPOCH: u64 = 1_728_000;
 #[cfg(test)]
 static_assertions::const_assert_eq!(
     DEFAULT_SLOTS_PER_EPOCH,
@@ -183,48 +183,23 @@ mod tests {
 
     #[test]
     fn test_due() {
+        // Parasol fork (F2/F3): rent economics are removed — `minimum_balance` is
+        // always 0, so every account is rent-exempt regardless of balance,
+        // data length, or per-byte-year rate. The assertions below pin that
+        // invariant so any accidental restoration of upstream rent math is
+        // caught by the test suite.
         let default_rent = Rent::default();
-
-        assert_eq!(
-            default_rent.due(0, 2, 1.2),
-            RentDue::Paying(
-                (((2 + ACCOUNT_STORAGE_OVERHEAD) * DEFAULT_LAMPORTS_PER_BYTE_YEAR) as f64 * 1.2)
-                    as u64
-            ),
-        );
-        assert_eq!(
-            default_rent.due(
-                (((2 + ACCOUNT_STORAGE_OVERHEAD) * DEFAULT_LAMPORTS_PER_BYTE_YEAR) as f64
-                    * DEFAULT_EXEMPTION_THRESHOLD) as u64,
-                2,
-                1.2
-            ),
-            RentDue::Exempt,
-        );
+        assert_eq!(default_rent.due(0, 2, 1.2), RentDue::Exempt);
+        assert_eq!(default_rent.due(1_000_000, 2, 1.2), RentDue::Exempt);
+        assert_eq!(default_rent.due(u64::MAX, 4096, 100.0), RentDue::Exempt);
 
         let custom_rent = Rent {
             lamports_per_byte_year: 5,
             exemption_threshold: 2.5,
             ..Rent::default()
         };
-
-        assert_eq!(
-            custom_rent.due(0, 2, 1.2),
-            RentDue::Paying(
-                (((2 + ACCOUNT_STORAGE_OVERHEAD) * custom_rent.lamports_per_byte_year) as f64 * 1.2)
-                    as u64,
-            )
-        );
-
-        assert_eq!(
-            custom_rent.due(
-                (((2 + ACCOUNT_STORAGE_OVERHEAD) * custom_rent.lamports_per_byte_year) as f64
-                    * custom_rent.exemption_threshold) as u64,
-                2,
-                1.2
-            ),
-            RentDue::Exempt
-        );
+        assert_eq!(custom_rent.due(0, 2, 1.2), RentDue::Exempt);
+        assert_eq!(custom_rent.due(1_000_000, 2, 1.2), RentDue::Exempt);
     }
 
     #[test]
