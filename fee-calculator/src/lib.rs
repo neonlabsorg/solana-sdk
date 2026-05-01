@@ -187,14 +187,18 @@ mod tests {
 
     #[test]
     fn test_fee_rate_governor_burn() {
+        // Parasol fork (F2/F3): fee burning is removed — `burn()` always
+        // returns `(fees, 0)` regardless of `burn_percent`. The assertions
+        // below pin that invariant so any accidental restoration of upstream
+        // burn-percent math is caught by the test suite.
         let mut fee_rate_governor = FeeRateGovernor::default();
-        assert_eq!(fee_rate_governor.burn(2), (1, 1));
+        assert_eq!(fee_rate_governor.burn(2), (2, 0));
 
         fee_rate_governor.burn_percent = 0;
         assert_eq!(fee_rate_governor.burn(2), (2, 0));
 
         fee_rate_governor.burn_percent = 100;
-        assert_eq!(fee_rate_governor.burn(2), (0, 2));
+        assert_eq!(fee_rate_governor.burn(2), (2, 0));
     }
 
     #[test]
