@@ -3641,6 +3641,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "solana-program-subaccount"
+version = "3.0.0"
+dependencies = [
+ "solana-account-info",
+ "solana-address 1.1.0",
+ "solana-define-syscall 3.0.0",
+ "solana-program-entrypoint",
+ "solana-program-error",
+]
+
+[[package]]
 name = "solana-pubkey"
 version = "3.0.0"
 dependencies = [

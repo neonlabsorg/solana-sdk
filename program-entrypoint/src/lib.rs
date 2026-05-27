@@ -392,9 +392,40 @@ unsafe fn deserialize_instruction_data<'a>(input: *mut u8, mut offset: usize) ->
     (instruction_data, offset)
 }
 
+/// Deserialize a single account from the runtime's input buffer.
+///
+/// Reads the account flags, key, owner, lamports, and data that the runtime
+/// serialized starting at `offset`, returning an [`AccountInfo`] that borrows
+/// directly from the buffer along with the offset of the next account.
+///
+/// The integer arithmetic in this method is safe when called on a buffer that
+/// was serialized by the runtime. Use with buffers serialized otherwise is
+/// unsupported and done at one's own risk.
+///
+/// # Safety
+///
+/// The caller must guarantee all of the following:
+///
+/// - `input` is a valid, non-null pointer to a buffer produced by the runtime's
+///   account serialization, and `offset` points at the start of a serialized
+///   account within that buffer.
+/// - The buffer is large enough that the entire serialized account — the
+///   leading flags and original-data-length padding, the key and owner
+///   `Pubkey`s, the lamports, the data-length field, and `data_len` bytes of
+///   account data followed by `MAX_PERMITTED_DATA_INCREASE` bytes of realloc
+///   padding and the rent epoch — lies within bounds. Reads and writes past the
+///   end of the buffer are undefined behavior.
+/// - The buffer is writable: this function writes the original data length back
+///   into the padding bytes and the returned `AccountInfo` exposes mutable
+///   references to the lamports and account data.
+/// - The lifetime `'a` is not constrained by any argument and is chosen by the
+///   caller. The caller must ensure the buffer pointed to by `input` outlives
+///   `'a` and that no other code reads or writes the borrowed lamports or data
+///   region for the duration of `'a`, since the returned `AccountInfo` aliases
+///   it mutably.
 #[allow(clippy::arithmetic_side_effects)]
 #[inline(always)] // this reduces CU usage by half!
-unsafe fn deserialize_account_info<'a>(
+pub unsafe fn deserialize_account_info<'a>(
     input: *mut u8,
     mut offset: usize,
 ) -> (AccountInfo<'a>, usize) {
