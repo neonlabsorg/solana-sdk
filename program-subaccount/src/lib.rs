@@ -46,8 +46,16 @@ pub fn create_subaccount(
 }
 
 /// Load subaccount
+///
+/// # Safety
+///
+/// The returned `AccountInfo<'a>` is constructed from raw runtime-managed memory.
+/// Callers must ensure that the chosen lifetime `'a` does not outlive the loaded
+/// subaccount backing storage, that the account is not used after it is unloaded,
+/// and that all references derived from the returned value remain confined to the
+/// current valid invocation/loading scope.
 #[inline]
-pub fn load_subaccount<'a>(seeds: &[&[u8]]) -> Result<AccountInfo<'a>, ProgramError> {
+pub unsafe fn load_subaccount<'a>(seeds: &[&[u8]]) -> Result<AccountInfo<'a>, ProgramError> {
     #[cfg(target_os = "solana")]
     {
         let mut account_view_addr = 0u64;
@@ -85,8 +93,16 @@ pub fn load_subaccount<'a>(seeds: &[&[u8]]) -> Result<AccountInfo<'a>, ProgramEr
 }
 
 /// Unload subaccount
+///
+/// # Safety
+///
+/// Unloading a subaccount can invalidate the memory referenced by `subaccount`
+/// and by any `AccountInfo` clones or outstanding borrows that alias the same
+/// underlying subaccount state. The caller must ensure that no such aliases or
+/// borrows are used after this function returns, and that unloading this
+/// subaccount is otherwise valid in the current runtime context.
 #[inline]
-pub fn unload_subaccount(subaccount: &AccountInfo<'_>) -> Result<(), ProgramError> {
+pub unsafe fn unload_subaccount(subaccount: &AccountInfo<'_>) -> Result<(), ProgramError> {
     #[cfg(target_os = "solana")]
     {
         let key_ptr = subaccount.key as *const _ as *const u8;
