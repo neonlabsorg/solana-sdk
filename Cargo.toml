@@ -65,6 +65,7 @@ members = [
     "program-memory",
     "program-option",
     "program-pack",
+    "program-subaccount",
     "pubkey",
     "quic-definitions",
     "rent",

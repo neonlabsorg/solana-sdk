@@ -1,0 +1,19 @@
+[package]
+name = "solana-program-subaccount"
+description = "Solana Subaccount and related definitions."
+version = "3.0.0"
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+solana-address = { workspace = true }
+solana-account-info = { workspace = true }
+solana-program-error = { workspace = true }
+
+[target.'cfg(target_os = "solana")'.dependencies]
+solana-define-syscall = { workspace = true }
+solana-program-entrypoint = { workspace = true }
+
+[lints]
+workspace = true
