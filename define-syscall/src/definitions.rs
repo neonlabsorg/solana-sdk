@@ -33,8 +33,8 @@ define_syscall!(fn sol_get_sysvar(sysvar_id_addr: *const u8, result: *mut u8, of
 define_syscall!(fn sol_get_epoch_stake(vote_address: *const u8) -> u64);
 define_syscall!(fn sol_panic_(filename: *const u8, filename_len: u64, line: u64, column: u64));
 define_syscall!(fn sol_create_subaccount(payer_pubkey: *const u8, seeds_addr: *const u8, seeds_len: u64, space: u64, lamports: u64) -> u64);
-define_syscall!(fn sol_load_subaccount_rust(seeds_addr: *const u8, seeds_len: u64, out_account_view_addr: *mut u64, out_index_addr: *mut u64) -> u64);
-define_syscall!(fn sol_load_subaccount_c(seeds_addr: *const u8, seeds_len: u64, out_account_view_addr: *mut u64, out_index_addr: *mut u64) -> u64);
+define_syscall!(fn sol_load_subaccount_rust(seeds_addr: *const u8, seeds_len: u64, out_account_view_addr: *mut u64, out_header_addr: *mut u64) -> u64);
+define_syscall!(fn sol_load_subaccount_c(seeds_addr: *const u8, seeds_len: u64, out_account_view_addr: *mut u64, out_header_addr: *mut u64) -> u64);
 define_syscall!(fn sol_unload_subaccount(vm_header_addr: u64) -> u64);
 
 // these are deprecated - use sol_get_sysvar instead
