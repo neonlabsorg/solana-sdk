@@ -34,6 +34,12 @@ use {
 };
 
 /// Create a new subaccount with the given seeds and space, owned by the caller.
+/// 
+/// Requirements:
+///  - the first seed must be the base key for the subaccount, present in the account list and writable;
+///  - if lamports is not zero, the payer must be a writable signer in outer instruction;
+///  - space ≤ MAX_PERMITTED_DATA_LENGTH;
+///  - seed/seeds-len limits inherited from MAX_SEEDS/MAX_SEED_LEN.
 #[inline]
 pub fn create_subaccount(
     payer: &Address,
@@ -66,7 +72,18 @@ pub fn create_subaccount(
     }
 }
 
-/// Load subaccount
+/// Load subaccount for the given seeds and return an `AccountInfo` view into it.
+/// 
+/// Subaccount inherits the same writable permission as a base account, which must be
+/// the first seed and must be present in the account list. The returned `AccountInfo`
+/// is valid until the subaccount is unloaded or the program invocation ends, and must 
+/// not be used after either of those events.
+/// There is not available to load subaccounts with the same seeds more than once concurrently
+/// (i.e., without unloading in between), and doing so will result in an error
+/// InstructionError::AccountAlreadyInitialized.
+///
+/// Requirements:
+///  - the first seed must be the base key for the subaccount, present in the account list.
 ///
 /// # Safety
 ///
@@ -113,7 +130,11 @@ pub unsafe fn load_subaccount<'a>(seeds: &[&[u8]]) -> Result<AccountInfo<'a>, Pr
     }
 }
 
-/// Unload subaccount
+/// Unload subaccount.
+/// 
+/// Unloading a subaccount invalidates the `AccountInfo` returned by `load_subaccount`, 
+/// and any clones or borrows of it. Unloading a subaccount that is not currently loaded, 
+/// or that has already been unloaded, will result in an error InstructionError::InvalidArgument.
 ///
 /// # Safety
 ///
