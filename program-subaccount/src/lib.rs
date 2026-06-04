@@ -28,7 +28,8 @@ const _: () = assert!(
 #[cfg(target_os = "solana")]
 use {
     solana_define_syscall::definitions::{
-        sol_create_subaccount, sol_load_subaccount_rust, sol_unload_subaccount,
+        sol_create_subaccount, sol_load_subaccount_rust, sol_read_subaccount,
+        sol_unload_subaccount,
     },
     solana_program_entrypoint::deserialize_account_info,
 };
@@ -130,9 +131,52 @@ pub unsafe fn load_subaccount<'a>(seeds: &[&[u8]]) -> Result<AccountInfo<'a>, Pr
     }
 }
 
+/// Read raw bytes from a subaccount's data without loading it into a slot.
+///
+/// Copies exactly `buf.len()` bytes starting at `offset` from the subaccount
+/// derived from `seeds` into `buf`. Unlike [`load_subaccount`], this does not
+/// occupy a slot and returns no `AccountInfo` view — it is a one-shot copy out
+/// of the subaccount's data.
+///
+/// The requested range `[offset, offset + buf.len())` must lie entirely within
+/// the subaccount's data; otherwise the syscall fails with
+/// `ProgramError::InvalidArgument`. A subaccount that does not exist has empty
+/// data, so any positive-length read of a missing subaccount fails the same
+/// way.
+///
+/// Requirements:
+///  - the first seed must be the base key for the subaccount, present in the
+///    account list.
+#[inline]
+pub fn read_subaccount(seeds: &[&[u8]], buf: &mut [u8], offset: u64) -> Result<(), ProgramError> {
+    #[cfg(target_os = "solana")]
+    {
+        let result = unsafe {
+            sol_read_subaccount(
+                seeds as *const _ as *const u8,
+                seeds.len() as u64,
+                buf.as_mut_ptr(),
+                buf.len() as u64,
+                offset,
+            )
+        };
+
+        match result {
+            0 => Ok(()),
+            err => Err(ProgramError::from(err)),
+        }
+    }
+
+    #[cfg(not(target_os = "solana"))]
+    {
+        let _ = (seeds, buf, offset); // avoid unused variable warnings
+        unimplemented!("read_subaccount is only supported on Solana");
+    }
+}
+
 /// Unload subaccount.
-/// 
-/// Unloading a subaccount invalidates the `AccountInfo` returned by `load_subaccount`, 
+///
+/// Unloading a subaccount invalidates the `AccountInfo` returned by `load_subaccount`,
 /// and any clones or borrows of it. Unloading a subaccount that is not currently loaded, 
 /// or that has already been unloaded, will result in an error InstructionError::InvalidArgument.
 ///
