@@ -156,8 +156,8 @@ pub fn read_subaccount(seeds: &[&[u8]], buf: &mut [u8], offset: u64) -> Result<(
                 seeds as *const _ as *const u8,
                 seeds.len() as u64,
                 buf.as_mut_ptr(),
-                buf.len() as u64,
                 offset,
+                buf.len() as u64,
             )
         };
 
