@@ -35,6 +35,7 @@ define_syscall!(fn sol_panic_(filename: *const u8, filename_len: u64, line: u64,
 define_syscall!(fn sol_create_subaccount(payer_pubkey: *const u8, seeds_addr: *const u8, seeds_len: u64, space: u64, lamports: u64) -> u64);
 define_syscall!(fn sol_load_subaccount_rust(seeds_addr: *const u8, seeds_len: u64, out_account_view_addr: *mut u64, out_header_addr: *mut u64) -> u64);
 define_syscall!(fn sol_load_subaccount_c(seeds_addr: *const u8, seeds_len: u64, out_account_view_addr: *mut u64, out_header_addr: *mut u64) -> u64);
+define_syscall!(fn sol_read_subaccount(seeds_addr: *const u8, seeds_len: u64, buff: *mut u8, offset: u64, length: u64) -> u64);
 define_syscall!(fn sol_unload_subaccount(vm_header_addr: u64) -> u64);
 
 // these are deprecated - use sol_get_sysvar instead
