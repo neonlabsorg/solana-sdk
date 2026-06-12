@@ -281,9 +281,9 @@ pub fn log_cu_usage(_attr: TokenStream, item: TokenStream) -> TokenStream {
         let __result = (|| #block)();
 
         let cu_after = unsafe { ::solana_program_log::logger::remaining_compute_units() };
-        let introspection_cost = 102; // 100 - compute budget syscall_base_cost,  2 - extra calculations
+        let introspection_cost = 12; // 10 - compute budget syscall_base_cost,  2 - extra calculations
 
-        let consumed = cu_before - cu_after - introspection_cost;
+        let consumed = (cu_before - cu_after).saturating_sub(introspection_cost);
 
         ::solana_program_log::log!("Function {} consumed {} compute units", stringify!(#fn_name), consumed);
 
