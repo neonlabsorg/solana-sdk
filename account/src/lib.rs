@@ -139,6 +139,14 @@ pub struct AccountSharedData {
     rent_epoch: Epoch,
 }
 
+/// Sentinel `rent_epoch` value that marks an [`AccountSharedData`] as a
+/// subaccount created via the `sol_create_subaccount` / `sol_set_subaccount_slice`
+/// syscalls. Subaccounts are ephemeral, transaction-scope lanes in
+/// `TransactionAccounts` and never carry actual rent obligations; this sentinel
+/// lets the runtime distinguish them from regular accounts without a separate
+/// storage bit on `AccountSharedData`.
+const SUBACCOUNT_RENT_EPOCH: Epoch = Epoch::MAX - 1;
+
 /// Compares two ReadableAccounts
 ///
 /// Returns true if accounts are essentially equivalent as in all fields are equivalent.
@@ -204,6 +212,11 @@ pub trait WritableAccount: ReadableAccount {
     fn copy_into_owner_from_slice(&mut self, source: &[u8]);
     fn set_executable(&mut self, executable: bool);
     fn set_rent_epoch(&mut self, epoch: Epoch);
+    /// Marks this account as a subaccount by writing the `SUBACCOUNT_RENT_EPOCH`
+    /// sentinel into `rent_epoch`. Paired with [`ReadableAccount::is_subaccount`].
+    fn set_subaccount_mark(&mut self) {
+        self.set_rent_epoch(SUBACCOUNT_RENT_EPOCH);
+    }
     #[deprecated(since = "3.3.0")]
     fn create(
         lamports: u64,
@@ -230,6 +243,11 @@ pub trait ReadableAccount: Sized {
             self.executable(),
             self.rent_epoch(),
         )
+    }
+    /// Returns `true` if this account carries the subaccount sentinel
+    /// `rent_epoch` value. Paired with [`WritableAccount::set_subaccount_mark`].
+    fn is_subaccount(&self) -> bool {
+        self.rent_epoch() == SUBACCOUNT_RENT_EPOCH
     }
 }
 
@@ -1160,5 +1178,23 @@ pub mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_subaccount_mark_round_trip() {
+        let mut account = AccountSharedData::new(42, 8, &Pubkey::new_unique());
+        assert!(!account.is_subaccount());
+        account.set_subaccount_mark();
+        assert!(account.is_subaccount());
+        assert_eq!(account.rent_epoch(), SUBACCOUNT_RENT_EPOCH);
+        account.set_rent_epoch(INITIAL_RENT_EPOCH);
+        assert!(!account.is_subaccount());
+    }
+
+    #[test]
+    fn test_subaccount_mark_does_not_collide_with_initial() {
+        let account = AccountSharedData::new(0, 0, &Pubkey::default());
+        assert!(!account.is_subaccount());
+        assert_ne!(INITIAL_RENT_EPOCH, SUBACCOUNT_RENT_EPOCH);
     }
 }
