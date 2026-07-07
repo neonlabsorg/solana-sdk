@@ -1,5 +1,4 @@
 //! The `system_transaction` module provides functionality for creating system transactions.
-#![cfg_attr(docsrs, feature(doc_cfg))]
 
 use {
     solana_hash::Hash, solana_keypair::Keypair, solana_message::Message, solana_pubkey::Pubkey,

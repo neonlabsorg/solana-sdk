@@ -1,5 +1,4 @@
 //! Functions related to nonce accounts.
-#![cfg_attr(docsrs, feature(doc_cfg))]
 
 use {
     solana_account::{state_traits::StateMut, AccountSharedData, ReadableAccount},
@@ -32,11 +31,7 @@ pub fn verify_nonce_account(
 ) -> Option<Data> {
     (account.owner() == &system_program::id())
         .then(|| {
-            #[cfg(feature = "wincode")]
-            let versions = wincode::deserialize::<Versions>(account.data());
-            #[cfg(not(feature = "wincode"))]
-            let versions = StateMut::<Versions>::state(account);
-            versions
+            StateMut::<Versions>::state(account)
                 .ok()?
                 .verify_recent_blockhash(recent_blockhash)
                 .cloned()

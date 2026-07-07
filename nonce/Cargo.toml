@@ -2,7 +2,7 @@
 name = "solana-nonce"
 description = "Solana durable transaction nonces."
 documentation = "https://docs.rs/solana-nonce"
-version = "3.1.0"
+version = "3.0.0"
 authors = { workspace = true }
 repository = { workspace = true }
 homepage = { workspace = true }
@@ -19,28 +19,19 @@ dev-context-only-utils = ["serde"]
 serde = [
     "dep:serde",
     "dep:serde_derive",
-    "serde/alloc",
     "solana-fee-calculator/serde",
     "solana-hash/serde",
     "solana-pubkey/serde",
-]
-wincode = [
-    "dep:wincode",
-    "solana-fee-calculator/wincode",
-    "solana-hash/wincode",
-    "solana-pubkey/wincode",
 ]
 
 [dependencies]
 serde = { workspace = true, optional = true }
 serde_derive = { workspace = true, optional = true }
 solana-fee-calculator = { workspace = true }
-solana-hash = { workspace = true, features = ["copy", "decode"] }
+solana-hash = { workspace = true, default-features = false }
 solana-pubkey = { workspace = true, default-features = false }
 solana-sha256-hasher = { workspace = true }
-wincode = { workspace = true, optional = true, features = ["alloc"] }
 
 [dev-dependencies]
 bincode = { workspace = true }
-solana-nonce = { path = ".", features = ["dev-context-only-utils", "wincode"] }
-solana-pubkey = { workspace = true, features = ["std"], default-features = false }
+solana-nonce = { path = ".", features = ["dev-context-only-utils"] }

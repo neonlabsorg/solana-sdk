@@ -2,7 +2,7 @@
 name = "solana-example-mocks"
 description = "Solana mock types for use in examples"
 documentation = "https://docs.rs/solana-example-mocks"
-version = "4.0.0"
+version = "3.0.0"
 authors = { workspace = true }
 repository = { workspace = true }
 homepage = { workspace = true }
@@ -20,10 +20,14 @@ bincode = ["solana-system-interface/bincode"]
 [dependencies]
 serde = { workspace = true }
 serde_derive = { workspace = true }
+solana-address-lookup-table-interface = { workspace = true }
+solana-clock = { workspace = true }
 solana-hash = { workspace = true }
-solana-instruction = { workspace = true, features = ["std"] }
+solana-instruction = { workspace = true }
+solana-keccak-hasher = { workspace = true }
+solana-message = { workspace = true, features = ["serde"] }
 solana-nonce = { workspace = true }
-solana-pubkey = { workspace = true, features = ["std"] }
+solana-pubkey = { workspace = true }
 solana-sdk-ids = { workspace = true }
 solana-system-interface = { workspace = true }
 thiserror = { workspace = true }

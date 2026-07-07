@@ -16,7 +16,7 @@ use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "frozen-abi")]
 use solana_frozen_abi_macro::{frozen_abi, AbiExample};
 #[cfg(feature = "wincode")]
-use wincode::{containers, len::ShortU16, SchemaRead, SchemaWrite, UninitBuilder};
+use wincode::{containers, len::ShortU16Len, SchemaRead, SchemaWrite};
 use {
     crate::{
         compiled_instruction::CompiledInstruction, compiled_keys::CompiledKeys,
@@ -26,6 +26,7 @@ use {
     solana_hash::Hash,
     solana_instruction::Instruction,
     solana_sanitize::{Sanitize, SanitizeError},
+    solana_sdk_ids::bpf_loader_upgradeable,
     std::{collections::HashSet, convert::TryFrom},
 };
 
@@ -75,7 +76,11 @@ fn compile_instructions(ixs: &[Instruction], keys: &[Address]) -> Vec<CompiledIn
     derive(Deserialize, Serialize),
     serde(rename_all = "camelCase")
 )]
-#[cfg_attr(feature = "wincode", derive(SchemaWrite, SchemaRead, UninitBuilder))]
+#[cfg_attr(
+    feature = "wincode",
+    derive(SchemaWrite, SchemaRead),
+    wincode(struct_extensions)
+)]
 #[derive(Default, Debug, PartialEq, Eq, Clone)]
 pub struct Message {
     /// The message header, identifying signed and read-only `account_keys`.
@@ -84,7 +89,7 @@ pub struct Message {
 
     /// All the account keys used by this transaction.
     #[cfg_attr(feature = "serde", serde(with = "solana_short_vec"))]
-    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16>"))]
+    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16Len>"))]
     pub account_keys: Vec<Address>,
 
     /// The id of a recent ledger entry.
@@ -93,7 +98,7 @@ pub struct Message {
     /// Programs that will be executed in sequence and committed in one atomic transaction if all
     /// succeed.
     #[cfg_attr(feature = "serde", serde(with = "solana_short_vec"))]
-    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16>"))]
+    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16Len>"))]
     pub instructions: Vec<CompiledInstruction>,
 }
 
@@ -433,7 +438,7 @@ impl Message {
     }
 
     /// Compute the blake3 hash of this transaction's message.
-    #[cfg(all(not(target_os = "solana"), feature = "wincode", feature = "blake3"))]
+    #[cfg(all(not(target_os = "solana"), feature = "bincode", feature = "blake3"))]
     pub fn hash(&self) -> Hash {
         let message_bytes = self.serialize();
         Self::hash_raw_message(&message_bytes)
@@ -454,9 +459,9 @@ impl Message {
         compile_instruction(ix, &self.account_keys)
     }
 
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     pub fn serialize(&self) -> Vec<u8> {
-        wincode::serialize(self).unwrap()
+        bincode::serialize(self).unwrap()
     }
 
     pub fn program_id(&self, instruction_index: usize) -> Option<&Address> {
@@ -489,7 +494,13 @@ impl Message {
     }
 
     pub fn is_key_called_as_program(&self, key_index: usize) -> bool {
-        super::is_key_called_as_program(&self.instructions, key_index)
+        if let Ok(key_index) = u8::try_from(key_index) {
+            self.instructions
+                .iter()
+                .any(|ix| ix.program_id_index == key_index)
+        } else {
+            false
+        }
     }
 
     pub fn program_position(&self, index: usize) -> Option<usize> {
@@ -504,13 +515,19 @@ impl Message {
     }
 
     pub fn demote_program_id(&self, i: usize) -> bool {
-        super::is_program_id_write_demoted(i, &self.account_keys, &self.instructions)
+        self.is_key_called_as_program(i) && !self.is_upgradeable_loader_present()
     }
 
     /// Returns true if the account at the specified index was requested to be
     /// writable. This method should not be used directly.
     pub(super) fn is_writable_index(&self, i: usize) -> bool {
-        super::is_writable_index(i, self.header, &self.account_keys)
+        i < (self.header.num_required_signatures as usize)
+            .saturating_sub(self.header.num_readonly_signed_accounts as usize)
+            || (i >= self.header.num_required_signatures as usize
+                && i < self
+                    .account_keys
+                    .len()
+                    .saturating_sub(self.header.num_readonly_unsigned_accounts as usize))
     }
 
     /// Returns true if the account at the specified index is writable by the
@@ -524,13 +541,25 @@ impl Message {
         i: usize,
         reserved_account_keys: Option<&HashSet<Address>>,
     ) -> bool {
-        super::is_maybe_writable(
-            i,
-            self.header,
-            &self.account_keys,
-            &self.instructions,
-            reserved_account_keys,
-        )
+        (self.is_writable_index(i))
+            && !self.is_account_maybe_reserved(i, reserved_account_keys)
+            && !self.demote_program_id(i)
+    }
+
+    /// Returns true if the account at the specified index is in the optional
+    /// reserved account keys set.
+    fn is_account_maybe_reserved(
+        &self,
+        key_index: usize,
+        reserved_account_keys: Option<&HashSet<Address>>,
+    ) -> bool {
+        let mut is_maybe_reserved = false;
+        if let Some(reserved_account_keys) = reserved_account_keys {
+            if let Some(key) = self.account_keys.get(key_index) {
+                is_maybe_reserved = reserved_account_keys.contains(key);
+            }
+        }
+        is_maybe_reserved
     }
 
     pub fn is_signer(&self, i: usize) -> bool {
@@ -562,7 +591,9 @@ impl Message {
 
     /// Returns `true` if any account is the BPF upgradeable loader.
     pub fn is_upgradeable_loader_present(&self) -> bool {
-        super::is_upgradeable_loader_present(&self.account_keys)
+        self.account_keys
+            .iter()
+            .any(|&key| key == bpf_loader_upgradeable::id())
     }
 }
 
@@ -687,6 +718,26 @@ mod tests {
         assert!(message.is_maybe_writable(4, Some(&reserved_account_keys)));
         assert!(!message.is_maybe_writable(5, Some(&reserved_account_keys)));
         assert!(!message.is_maybe_writable(6, Some(&reserved_account_keys)));
+    }
+
+    #[test]
+    fn test_is_account_maybe_reserved() {
+        let key0 = Address::new_unique();
+        let key1 = Address::new_unique();
+
+        let message = Message {
+            account_keys: vec![key0, key1],
+            ..Message::default()
+        };
+
+        let reserved_account_keys = HashSet::from([key1]);
+
+        assert!(!message.is_account_maybe_reserved(0, Some(&reserved_account_keys)));
+        assert!(message.is_account_maybe_reserved(1, Some(&reserved_account_keys)));
+        assert!(!message.is_account_maybe_reserved(2, Some(&reserved_account_keys)));
+        assert!(!message.is_account_maybe_reserved(0, None));
+        assert!(!message.is_account_maybe_reserved(1, None));
+        assert!(!message.is_account_maybe_reserved(2, None));
     }
 
     #[test]

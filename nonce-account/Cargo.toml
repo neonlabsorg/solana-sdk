@@ -2,7 +2,7 @@
 name = "solana-nonce-account"
 description = "Solana nonce account utils."
 documentation = "https://docs.rs/solana-nonce-account"
-version = "4.0.0"
+version = "3.0.0"
 authors = { workspace = true }
 repository = { workspace = true }
 homepage = { workspace = true }
@@ -12,16 +12,12 @@ edition = { workspace = true }
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
-[features]
-wincode = ["dep:wincode", "solana-nonce/wincode"]
-
 [dependencies]
 solana-account = { workspace = true, features = ["bincode"] }
 solana-hash = { workspace = true }
 solana-nonce = { workspace = true, features = ["serde"] }
 solana-sdk-ids = { workspace = true }
-wincode = { workspace = true, optional = true }
 
 [dev-dependencies]
 solana-fee-calculator = { workspace = true }
-solana-pubkey = { workspace = true, features = ["std"] }
+solana-pubkey = { workspace = true }

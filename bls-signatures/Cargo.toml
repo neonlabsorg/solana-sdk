@@ -2,7 +2,7 @@
 name = "solana-bls-signatures"
 description = "Solana BLS Signatures"
 documentation = "https://docs.rs/solana-bls-signatures"
-version = "3.0.0"
+version = "3.2.0"
 rust-version = "1.81.0"
 authors = { workspace = true }
 repository = { workspace = true }
@@ -35,12 +35,8 @@ pairing = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
 serde_with = { workspace = true, features = ["macros"], optional = true }
-solana-frozen-abi = { workspace = true, optional = true, features = [
-    "frozen-abi",
-] }
-solana-frozen-abi-macro = { workspace = true, optional = true, features = [
-    "frozen-abi",
-] }
+solana-frozen-abi = { workspace = true, optional = true, features = ["frozen-abi"] }
+solana-frozen-abi-macro = { workspace = true, optional = true, features = ["frozen-abi"] }
 thiserror = { workspace = true }
 
 [target.'cfg(not(target_os = "solana"))'.dependencies]
@@ -57,6 +53,7 @@ subtle = { workspace = true, optional = true }
 [dev-dependencies]
 bincode = { workspace = true }
 criterion = { workspace = true }
+ff = { workspace = true }
 solana-bls-signatures = { path = ".", features = ["std"] }
 solana-keypair = { workspace = true }
 tempfile = { workspace = true }

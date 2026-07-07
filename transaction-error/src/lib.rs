@@ -1,5 +1,5 @@
 #![cfg_attr(feature = "frozen-abi", feature(min_specialization))]
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #[cfg(feature = "serde")]
 use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "frozen-abi")]
@@ -11,7 +11,6 @@ pub type TransactionResult<T> = Result<T, TransactionError>;
 /// Reasons a transaction might be rejected.
 #[cfg_attr(feature = "frozen-abi", derive(AbiExample, AbiEnumVisitor))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "wincode", derive(wincode::SchemaWrite, wincode::SchemaRead))]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TransactionError {
     /// An account is already being processed in another transaction in a way

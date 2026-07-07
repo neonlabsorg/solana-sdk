@@ -3,7 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "frozen-abi")]
 use solana_frozen_abi_macro::AbiExample;
 #[cfg(feature = "wincode")]
-use wincode::{containers, len::ShortU16, SchemaRead, SchemaWrite};
+use wincode::{containers, len::ShortU16Len, SchemaRead, SchemaWrite};
 use {solana_address::Address, solana_sanitize::Sanitize};
 
 /// A compact encoding of an instruction.
@@ -26,24 +26,20 @@ pub struct CompiledInstruction {
     pub program_id_index: u8,
     /// Ordered indices into the transaction keys array indicating which accounts to pass to the program.
     #[cfg_attr(feature = "serde", serde(with = "solana_short_vec"))]
-    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16>"))]
+    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16Len>"))]
     pub accounts: Vec<u8>,
     /// The program input data.
     #[cfg_attr(feature = "serde", serde(with = "solana_short_vec"))]
-    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16>"))]
+    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16Len>"))]
     pub data: Vec<u8>,
 }
 
 impl Sanitize for CompiledInstruction {}
 
 impl CompiledInstruction {
-    #[cfg(feature = "wincode")]
-    pub fn new<T: wincode::Serialize<Src = T>>(
-        program_ids_index: u8,
-        data: &T,
-        accounts: Vec<u8>,
-    ) -> Self {
-        let data = wincode::serialize(data).unwrap();
+    #[cfg(feature = "bincode")]
+    pub fn new<T: serde::Serialize>(program_ids_index: u8, data: &T, accounts: Vec<u8>) -> Self {
+        let data = bincode::serialize(data).unwrap();
         Self {
             program_id_index: program_ids_index,
             accounts,
@@ -59,7 +55,7 @@ impl CompiledInstruction {
         }
     }
 
-    pub fn program_id<'a>(&self, tx_accounts: &'a [Address]) -> &'a Address {
-        &tx_accounts[self.program_id_index as usize]
+    pub fn program_id<'a>(&self, program_ids: &'a [Address]) -> &'a Address {
+        &program_ids[self.program_id_index as usize]
     }
 }

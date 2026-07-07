@@ -1,7 +1,6 @@
 //! Calculation of [shred] versions.
 //!
 //! [shred]: https://solana.com/docs/terminology#shred
-#![cfg_attr(docsrs, feature(doc_cfg))]
 
 use {solana_hard_forks::HardForks, solana_hash::Hash, solana_sha256_hasher::hashv};
 
@@ -24,7 +23,7 @@ pub fn version_from_hash(hash: &Hash) -> u16 {
 }
 
 pub fn compute_shred_version(genesis_hash: &Hash, hard_forks: Option<&HardForks>) -> u16 {
-    let mut hash = Hash::new_from_array(genesis_hash.to_bytes());
+    let mut hash = *genesis_hash;
     if let Some(hard_forks) = hard_forks {
         for &(slot, count) in hard_forks.iter() {
             let buf = [slot.to_le_bytes(), (count as u64).to_le_bytes()].concat();
@@ -38,29 +37,6 @@ pub fn compute_shred_version(genesis_hash: &Hash, hard_forks: Option<&HardForks>
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_version_from_hash() {
-        let hash = [
-            0xa5u8, 0xa5, 0x5a, 0x5a, 0xa5, 0xa5, 0x5a, 0x5a, 0xa5, 0xa5, 0x5a, 0x5a, 0xa5, 0xa5,
-            0x5a, 0x5a, 0xa5, 0xa5, 0x5a, 0x5a, 0xa5, 0xa5, 0x5a, 0x5a, 0xa5, 0xa5, 0x5a, 0x5a,
-            0xa5, 0xa5, 0x5a, 0x5a,
-        ];
-        let version = version_from_hash(&Hash::new_from_array(hash));
-        assert_eq!(version, 1);
-        let hash = [
-            0xa5u8, 0xa5, 0x5a, 0x5a, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0,
-        ];
-        let version = version_from_hash(&Hash::new_from_array(hash));
-        assert_eq!(version, 0xffff);
-        let hash = [
-            0xa5u8, 0xa5, 0x5a, 0x5a, 0xa5, 0xa5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        ];
-        let version = version_from_hash(&Hash::new_from_array(hash));
-        assert_eq!(version, 0x5a5b);
-    }
 
     #[test]
     fn test_compute_shred_version() {

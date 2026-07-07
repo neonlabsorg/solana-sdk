@@ -123,11 +123,10 @@ pub use {
     solana_signature::Signature,
     solana_transaction_error::{TransactionError, TransactionResult},
 };
-#[cfg(feature = "wincode")]
+#[cfg(feature = "bincode")]
 pub use {
     solana_hash::Hash,
     solana_signer::{signers::Signers, SignerError},
-    wincode::{containers, len::ShortU16, SchemaRead, SchemaWrite},
 };
 use {
     solana_message::inline_nonce::is_advance_nonce_instruction_data,
@@ -181,7 +180,6 @@ const NONCED_TX_MARKER_IX_INDEX: u8 = 0;
     solana_frozen_abi_macro::frozen_abi(digest = "ADDDuk3dAZJ5hDxue8v4btH7nhEyngxUpXaC7A4k8gyQ")
 )]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-#[cfg_attr(feature = "wincode", derive(SchemaWrite, SchemaRead))]
 #[derive(Debug, PartialEq, Default, Eq, Clone)]
 pub struct Transaction {
     /// A set of signatures of a serialized [`Message`], signed by the first
@@ -194,7 +192,6 @@ pub struct Transaction {
     /// [`num_required_signatures`]: https://docs.rs/solana-message/latest/solana_message/struct.MessageHeader.html#structfield.num_required_signatures
     // NOTE: Serialization-related changes must be paired with the direct read at sigverify.
     #[cfg_attr(feature = "serde", serde(with = "short_vec"))]
-    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16>"))]
     pub signatures: Vec<Signature>,
 
     /// The message to sign.
@@ -356,7 +353,7 @@ impl Transaction {
     /// #
     /// # Ok::<(), anyhow::Error>(())
     /// ```
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     pub fn new<T: Signers + ?Sized>(
         from_keypairs: &T,
         message: Message,
@@ -510,7 +507,7 @@ impl Transaction {
     /// #
     /// # Ok::<(), anyhow::Error>(())
     /// ```
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     pub fn new_signed_with_payer<T: Signers + ?Sized>(
         instructions: &[Instruction],
         payer: Option<&Address>,
@@ -536,7 +533,7 @@ impl Transaction {
     ///
     /// Panics when signing fails. See [`Transaction::try_sign`] and for a full
     /// description of failure conditions.
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     pub fn new_with_compiled_instructions<T: Signers + ?Sized>(
         from_keypairs: &T,
         keys: &[Address],
@@ -634,7 +631,7 @@ impl Transaction {
         &self.message
     }
 
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     /// Return the serialized message data to sign.
     pub fn message_data(&self) -> Vec<u8> {
         self.message().serialize()
@@ -716,7 +713,7 @@ impl Transaction {
     /// #
     /// # Ok::<(), anyhow::Error>(())
     /// ```
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     pub fn sign<T: Signers + ?Sized>(&mut self, keypairs: &T, recent_blockhash: Hash) {
         if let Err(e) = self.try_sign(keypairs, recent_blockhash) {
             panic!("Transaction::sign failed with error {e:?}");
@@ -743,7 +740,7 @@ impl Transaction {
     /// handle the error. See the documentation for
     /// [`Transaction::try_partial_sign`] for a full description of failure
     /// conditions.
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     pub fn partial_sign<T: Signers + ?Sized>(&mut self, keypairs: &T, recent_blockhash: Hash) {
         if let Err(e) = self.try_partial_sign(keypairs, recent_blockhash) {
             panic!("Transaction::partial_sign failed with error {e:?}");
@@ -763,7 +760,7 @@ impl Transaction {
     ///
     /// Panics if signing fails. Use [`Transaction::try_partial_sign_unchecked`]
     /// to handle the error.
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     pub fn partial_sign_unchecked<T: Signers + ?Sized>(
         &mut self,
         keypairs: &T,
@@ -856,7 +853,7 @@ impl Transaction {
     /// #
     /// # Ok::<(), anyhow::Error>(())
     /// ```
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     pub fn try_sign<T: Signers + ?Sized>(
         &mut self,
         keypairs: &T,
@@ -920,7 +917,7 @@ impl Transaction {
     /// [`PresignerError::VerificationFailure`]: https://docs.rs/solana-signer/latest/solana_signer/enum.PresignerError.html#variant.WrongSize
     /// [`solana-remote-wallet`]: https://docs.rs/solana-remote-wallet/latest/
     /// [`RemoteKeypair`]: https://docs.rs/solana-remote-wallet/latest/solana_remote_wallet/remote_keypair/struct.RemoteKeypair.html
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     pub fn try_partial_sign<T: Signers + ?Sized>(
         &mut self,
         keypairs: &T,
@@ -947,7 +944,7 @@ impl Transaction {
     /// # Errors
     ///
     /// Returns an error if signing fails.
-    #[cfg(feature = "wincode")]
+    #[cfg(feature = "bincode")]
     pub fn try_partial_sign_unchecked<T: Signers + ?Sized>(
         &mut self,
         keypairs: &T,

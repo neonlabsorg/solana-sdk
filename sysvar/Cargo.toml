@@ -2,7 +2,7 @@
 name = "solana-sysvar"
 description = "Solana sysvar account types"
 documentation = "https://docs.rs/solana-sysvar"
-version = "4.0.0"
+version = "3.1.1"
 authors = { workspace = true }
 repository = { workspace = true }
 homepage = { workspace = true }
@@ -27,7 +27,6 @@ serde = [
     "solana-epoch-schedule/serde",
     "solana-fee-calculator/serde",
     "solana-last-restart-slot/serde",
-    "solana-pubkey/serde",
     "solana-rent/serde",
     "solana-slot-hashes/serde",
     "solana-slot-history/serde",

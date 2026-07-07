@@ -1,7 +1,6 @@
 //! Convenience macro to declare a static public key and functions to interact with it
 //!
 //! Input: a single literal base58 string representation of a program's id
-#![cfg_attr(docsrs, feature(doc_cfg))]
 
 extern crate proc_macro;
 
@@ -240,7 +239,7 @@ pub fn derive_clone_zeroed(input: proc_macro::TokenStream) -> proc_macro::TokenS
                 syn::Fields::Named(ref fields) => fields.named.iter().map(|f| {
                     let name = &f.ident;
                     quote! {
-                        core::ptr::addr_of_mut!((*ptr).#name).write(self.#name.clone());
+                        core::ptr::addr_of_mut!((*ptr).#name).write(self.#name);
                     }
                 }),
                 _ => unimplemented!(),

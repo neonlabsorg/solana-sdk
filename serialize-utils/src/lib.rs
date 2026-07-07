@@ -1,6 +1,5 @@
 //! Helpers for reading and writing bytes.
 
-#![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::arithmetic_side_effects)]
 use {solana_pubkey::Pubkey, solana_sanitize::SanitizeError};
 

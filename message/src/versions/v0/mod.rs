@@ -15,7 +15,7 @@ use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "frozen-abi")]
 use solana_frozen_abi_macro::AbiExample;
 #[cfg(feature = "wincode")]
-use wincode::{containers, len::ShortU16, SchemaRead, SchemaWrite};
+use wincode::{containers, len::ShortU16Len, SchemaRead, SchemaWrite};
 use {
     crate::{
         compiled_instruction::CompiledInstruction,
@@ -47,11 +47,11 @@ pub struct MessageAddressTableLookup {
     pub account_key: Address,
     /// List of indexes used to load writable account addresses
     #[cfg_attr(feature = "serde", serde(with = "solana_short_vec"))]
-    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16>"))]
+    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16Len>"))]
     pub writable_indexes: Vec<u8>,
     /// List of indexes used to load readonly account addresses
     #[cfg_attr(feature = "serde", serde(with = "solana_short_vec"))]
-    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16>"))]
+    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16Len>"))]
     pub readonly_indexes: Vec<u8>,
 }
 
@@ -78,7 +78,7 @@ pub struct Message {
 
     /// List of accounts loaded by this transaction.
     #[cfg_attr(feature = "serde", serde(with = "solana_short_vec"))]
-    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16>"))]
+    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16Len>"))]
     pub account_keys: Vec<Address>,
 
     /// The blockhash of a recent block.
@@ -98,13 +98,13 @@ pub struct Message {
     ///   2) ordered list of keys loaded from `writable` lookup table indexes
     ///   3) ordered list of keys loaded from `readable` lookup table indexes
     #[cfg_attr(feature = "serde", serde(with = "solana_short_vec"))]
-    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16>"))]
+    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16Len>"))]
     pub instructions: Vec<CompiledInstruction>,
 
     /// List of address table lookups used to load additional accounts
     /// for this transaction.
     #[cfg_attr(feature = "serde", serde(with = "solana_short_vec"))]
-    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16>"))]
+    #[cfg_attr(feature = "wincode", wincode(with = "containers::Vec<_, ShortU16Len>"))]
     pub address_table_lookups: Vec<MessageAddressTableLookup>,
 }
 
@@ -323,10 +323,10 @@ impl Message {
         })
     }
 
-    #[cfg(feature = "wincode")]
-    /// Serialize this message with a version #0 prefix using wincode encoding.
+    #[cfg(feature = "bincode")]
+    /// Serialize this message with a version #0 prefix using bincode encoding.
     pub fn serialize(&self) -> Vec<u8> {
-        wincode::serialize(&(crate::MESSAGE_VERSION_PREFIX, self)).unwrap()
+        bincode::serialize(&(crate::MESSAGE_VERSION_PREFIX, self)).unwrap()
     }
 
     /// Returns true if the account at the specified index is called as a program by an instruction

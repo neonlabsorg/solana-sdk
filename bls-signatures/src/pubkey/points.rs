@@ -6,14 +6,14 @@ use std::sync::LazyLock;
 use {
     crate::{
         error::BlsError,
-        hash::{HashedMessage, HashedPoPPayload},
+        hash::{HashedMessage, HashedPoPPayload, PreparedHashedMessage},
         proof_of_possession::{AsProofOfPossessionAffine, ProofOfPossessionAffine},
         pubkey::bytes::{Pubkey, PubkeyCompressed},
         secret_key::SecretKey,
         signature::{AsSignatureAffine, SignatureAffine},
     },
-    blstrs::{Bls12, G1Affine, G1Projective, G2Prepared, Gt},
-    group::Group,
+    blstrs::{Bls12, G1Affine, G1Projective, G2Prepared, Gt, Scalar},
+    group::{prime::PrimeCurveAffine, Group},
     pairing::{MillerLoopResult, MultiMillerLoop},
 };
 
@@ -52,6 +52,10 @@ impl PubkeyProjective {
     }
 
     /// Aggregate a list of public keys into an existing aggregate
+    ///
+    /// Warning: This function performs mathematical point addition. It does not
+    /// perform public key validation (such as identity point checks) or Proof of
+    /// Possession (PoP) verification.
     #[allow(clippy::arithmetic_side_effects)]
     pub fn aggregate_with<'a, P: AddToPubkeyProjective + ?Sized + 'a>(
         &mut self,
@@ -64,6 +68,10 @@ impl PubkeyProjective {
     }
 
     /// Aggregate a list of public keys
+    ///
+    /// Warning: This function performs mathematical point addition. It does not
+    /// perform public key validation (such as identity point checks) or Proof of
+    /// Possession (PoP) verification.
     #[allow(clippy::arithmetic_side_effects)]
     pub fn aggregate<'a, P: AddToPubkeyProjective + ?Sized + 'a>(
         pubkeys: impl Iterator<Item = &'a P>,
@@ -80,7 +88,41 @@ impl PubkeyProjective {
         Ok(aggregate)
     }
 
+    #[allow(clippy::arithmetic_side_effects)]
+    pub fn aggregate_with_scalars<'a, P: AddToPubkeyProjective + ?Sized + 'a>(
+        pubkeys: impl ExactSizeIterator<Item = &'a P>,
+        scalars: impl ExactSizeIterator<Item = &'a Scalar>,
+    ) -> Result<PubkeyProjective, BlsError> {
+        if pubkeys.len() != scalars.len() {
+            return Err(BlsError::InputLengthMismatch);
+        }
+
+        if pubkeys.len() == 0 {
+            return Err(BlsError::EmptyAggregation);
+        }
+
+        let mut points = alloc::vec::Vec::with_capacity(pubkeys.len());
+        let mut scalar_values = alloc::vec::Vec::with_capacity(scalars.len());
+
+        for (pubkey, scalar) in pubkeys.zip(scalars) {
+            let mut point = PubkeyProjective::identity();
+            pubkey.add_to_accumulator(&mut point)?;
+
+            points.push(point.0);
+            scalar_values.push(*scalar);
+        }
+
+        Ok(PubkeyProjective(G1Projective::multi_exp(
+            &points,
+            &scalar_values,
+        )))
+    }
+
     /// Aggregate a list of public keys into an existing aggregate
+    ///
+    /// Warning: This function performs mathematical point addition. It does not
+    /// perform public key validation (such as identity point checks) or Proof of
+    /// Possession (PoP) verification.
     #[allow(clippy::arithmetic_side_effects)]
     #[cfg(feature = "parallel")]
     pub fn par_aggregate_with<'a, P: AddToPubkeyProjective + Sync + 'a>(
@@ -93,6 +135,10 @@ impl PubkeyProjective {
     }
 
     /// Aggregate a list of public keys
+    ///
+    /// Warning: This function performs mathematical point addition. It does not
+    /// perform public key validation (such as identity point checks) or Proof of
+    /// Possession (PoP) verification.
     #[allow(clippy::arithmetic_side_effects)]
     #[cfg(feature = "parallel")]
     pub fn par_aggregate<'a, P: AddToPubkeyProjective + Sync + 'a>(
@@ -145,10 +191,21 @@ pub trait VerifiablePubkey: AsPubkeyAffine {
         signature: &S,
         hashed_message: &HashedMessage,
     ) -> Result<(), BlsError> {
+        let prepared_hashed_message = PreparedHashedMessage::from_hashed_message(hashed_message);
+        self.verify_signature_prepared(signature, &prepared_hashed_message)
+    }
+
+    /// Uses this public key to verify any convertible signature type using a
+    /// pre-hashed and pairing-prepared message.
+    fn verify_signature_prepared<S: AsSignatureAffine>(
+        &self,
+        signature: &S,
+        prepared_hashed_message: &PreparedHashedMessage,
+    ) -> Result<(), BlsError> {
         let pubkey_affine = self.try_as_affine()?;
         let signature_affine = signature.try_as_affine()?;
         pubkey_affine
-            ._verify_signature(&signature_affine, hashed_message)
+            ._verify_signature_prepared(&signature_affine, &prepared_hashed_message.prepared)
             .then_some(())
             .ok_or(BlsError::VerificationFailed)
     }
@@ -200,22 +257,35 @@ impl PubkeyAffine {
         signature: &SignatureAffine,
         hashed_message: &HashedMessage,
     ) -> bool {
+        let hashed_message_prepared = G2Prepared::from(hashed_message.0);
+        self._verify_signature_prepared(signature, &hashed_message_prepared)
+    }
+
+    pub(crate) fn _verify_signature_prepared(
+        &self,
+        signature: &SignatureAffine,
+        hashed_message_prepared: &G2Prepared,
+    ) -> bool {
+        if bool::from(self.0.is_identity()) {
+            return false;
+        }
+
         // The verification equation is e(pubkey, H(m)) = e(g1, signature).
         // This can be rewritten as e(pubkey, H(m)) * e(-g1, signature) = 1, which
         // allows for a more efficient verification using a multi-miller loop.
-        let hashed_message_prepared = G2Prepared::from(hashed_message.0);
         let signature_prepared = G2Prepared::from(signature.0);
 
         // use the static valud if `std` is available, otherwise compute it
         #[cfg(feature = "std")]
         let neg_g1_generator = &NEG_G1_GENERATOR_AFFINE;
         #[cfg(not(feature = "std"))]
+        #[allow(clippy::arithmetic_side_effects)]
         let neg_g1_generator_val: G1Affine = (-G1Projective::generator()).into();
         #[cfg(not(feature = "std"))]
         let neg_g1_generator = &neg_g1_generator_val;
 
         let miller_loop_result = Bls12::multi_miller_loop(&[
-            (&self.0, &hashed_message_prepared),
+            (&self.0, hashed_message_prepared),
             (neg_g1_generator, &signature_prepared),
         ]);
         miller_loop_result.final_exponentiation() == Gt::identity()
@@ -227,6 +297,10 @@ impl PubkeyAffine {
         proof: &ProofOfPossessionAffine,
         hashed_payload: &HashedPoPPayload,
     ) -> bool {
+        if bool::from(self.0.is_identity()) {
+            return false;
+        }
+
         // The verification equation is e(pubkey, H(pubkey)) == e(g1, proof).
         // This is rewritten to e(pubkey, H(pubkey)) * e(-g1, proof) = 1 for batching.
         let hashed_pubkey = hashed_payload.0;
@@ -237,6 +311,7 @@ impl PubkeyAffine {
         #[cfg(feature = "std")]
         let neg_g1_generator = &NEG_G1_GENERATOR_AFFINE;
         #[cfg(not(feature = "std"))]
+        #[allow(clippy::arithmetic_side_effects)]
         let neg_g1_generator_val: G1Affine = (-G1Projective::generator()).into();
         #[cfg(not(feature = "std"))]
         let neg_g1_generator = &neg_g1_generator_val;
@@ -294,4 +369,48 @@ impl_add_to_accumulator!(
     PubkeyProjective,
     PubkeyCompressed,
     convert
+);
+
+/// A BLS public key in an affine point representation that is guaranteed to
+/// be a point on the curve, but it is *not* guaranteed to be in the prime-order
+/// subgroup G1.
+///
+/// This type allows for efficient "unchecked" deserialization. It is designed
+/// to be used with aggregation functions where the expensive subgroup check
+/// can be performed on the aggregate instead of each individual public key.
+#[cfg(not(target_os = "solana"))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(transparent)]
+pub struct PubkeyAffineUnchecked(pub(crate) G1Affine);
+
+#[cfg(not(target_os = "solana"))]
+impl PubkeyAffineUnchecked {
+    /// Performs the subgroup check (coset check) on this point.
+    ///
+    /// This verifies that the point is on the curve and in the correct q-order
+    /// subgroup G1. Returns a validated `PubkeyAffine` on success.
+    pub fn verify_subgroup(&self) -> Result<PubkeyAffine, BlsError> {
+        if bool::from(self.0.is_torsion_free()) {
+            Ok(PubkeyAffine(self.0))
+        } else {
+            Err(BlsError::VerificationFailed)
+        }
+    }
+}
+
+impl_unchecked_conversions!(
+    PubkeyAffineUnchecked,
+    PubkeyAffine,
+    PubkeyProjective,
+    PubkeyCompressed,
+    Pubkey,
+    G1Affine
+);
+
+#[cfg(not(target_os = "solana"))]
+impl_add_to_accumulator!(
+    AddToPubkeyProjective,
+    PubkeyProjective,
+    PubkeyAffineUnchecked,
+    affine
 );

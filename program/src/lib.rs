@@ -465,7 +465,7 @@
 
 #![allow(incomplete_features)]
 #![cfg_attr(feature = "frozen-abi", feature(specialization))]
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 // Allows macro expansion of `use ::solana_program::*` to work within this crate
 extern crate self as solana_program;
@@ -675,6 +675,8 @@ pub use solana_example_mocks as example_mocks;
 
 #[cfg(test)]
 mod tests {
+    use super::unchecked_div_by_const;
+
     #[test]
     fn test_unchecked_div_by_const() {
         const D: u64 = 2;

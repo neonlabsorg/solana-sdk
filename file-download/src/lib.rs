@@ -1,12 +1,12 @@
 #![allow(clippy::arithmetic_side_effects)]
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 use {
     console::Emoji,
     indicatif::{ProgressBar, ProgressStyle},
     log::*,
     std::{
         fs::{self, File},
-        io::{self, BufWriter, Read},
+        io::{self, Read},
         path::Path,
         str::FromStr,
         time::{Duration, Instant},
@@ -229,12 +229,7 @@ pub fn download_file_with_headers<'a, 'b, S: AsRef<str>>(
     };
 
     File::create(&temp_destination_file)
-        .and_then(|mut file| {
-            std::io::copy(
-                &mut source,
-                &mut BufWriter::with_capacity(8_000_000, &mut file),
-            )
-        })
+        .and_then(|mut file| std::io::copy(&mut source, &mut file))
         .map_err(|err| format!("Unable to write {temp_destination_file:?}: {err:?}"))?;
 
     source.progress_bar.finish_and_clear();
