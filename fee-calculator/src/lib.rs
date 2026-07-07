@@ -63,14 +63,15 @@ pub struct FeeRateGovernor {
     pub burn_percent: u8,
 }
 
-pub const DEFAULT_TARGET_LAMPORTS_PER_SIGNATURE: u64 = 10_000;
-const DEFAULT_MS_PER_SLOT: u64 = 400;
+pub const DEFAULT_TARGET_LAMPORTS_PER_SIGNATURE: u64 = 0; // gasless (F2)
+const DEFAULT_MS_PER_SLOT: u64 = 100;
 #[cfg(test)]
 static_assertions::const_assert_eq!(DEFAULT_MS_PER_SLOT, solana_clock::DEFAULT_MS_PER_SLOT);
-pub const DEFAULT_TARGET_SIGNATURES_PER_SLOT: u64 = 50 * DEFAULT_MS_PER_SLOT;
+#[allow(clippy::erasing_op)]
+pub const DEFAULT_TARGET_SIGNATURES_PER_SLOT: u64 = 0 * DEFAULT_MS_PER_SLOT; // gasless (F2)
 
 // Percentage of tx fees to burn
-pub const DEFAULT_BURN_PERCENT: u8 = 50;
+pub const DEFAULT_BURN_PERCENT: u8 = 0; // fee burn disabled (F2)
 
 impl Default for FeeRateGovernor {
     fn default() -> Self {
@@ -168,8 +169,8 @@ impl FeeRateGovernor {
 
     /// calculate unburned fee from a fee total, returns (unburned, burned)
     pub fn burn(&self, fees: u64) -> (u64, u64) {
-        let burned = fees * u64::from(self.burn_percent) / 100;
-        (fees - burned, burned)
+        // fee burn disabled (F2): nothing burned
+        (fees, 0)
     }
 
     /// create a FeeCalculator based on current cluster signature throughput
